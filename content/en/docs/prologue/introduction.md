@@ -60,4 +60,4 @@ These documents are primarily for developers who are working on the project:
 See the [CONTRIBUTING file](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/CONTRIBUTING.md) in the source tree for details of how to contribute.
 ## Help
 
-Need help with Cloud Hypervisor? Open a [discussion thread on Github](https://github.com/cloud-hypervisor/cloud-hypervisor/discussions) or ask in [our slack](https://join.slack.com/t/cloud-hypervisor/shared_invite/enQtNjY3MTE3MDkwNDQ4LWQ1MTA1ZDVmODkwMWQ1MTRhYzk4ZGNlN2UwNTI3ZmFlODU0OTcwOWZjMTkwZDExYWE3YjFmNzgzY2FmNDAyMjI).
+Need help with Cloud Hypervisor? Open a [discussion thread on Github](https://github.com/cloud-hypervisor/cloud-hypervisor/discussions) or ask in [our Slack](https://join.slack.com/t/cloud-hypervisor/shared_invite/enQtNjY3MTE3MDkwNDQ4LWQ1MTA1ZDVmODkwMWQ1MTRhYzk4ZGNlN2UwNTI3ZmFlODU0OTcwOWZjMTkwZDExYWE3YjFmNzgzY2FmNDAyMjI).
