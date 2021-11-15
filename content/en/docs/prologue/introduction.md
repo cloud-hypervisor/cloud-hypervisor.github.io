@@ -27,6 +27,7 @@ Here are some documents related to particular features and functionality that a 
 
 * [HTTP API](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/api.md)
 * [ARM64 support](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/arm64.md)
+* [Virtual CPU configuration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/cpu.md)
 * [Using virtio-fs](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/fs.md)
 * [How to hotplug devices](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/hotplug.md)
 * [How to use Intel SGX](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/intel_sgx.md)
