@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cloud-hypervisor.github.io/sitemap.xml
+Sitemap: https://www.cloudhypervisor.org/sitemap.xml
