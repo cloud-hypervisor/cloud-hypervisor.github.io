@@ -48,7 +48,7 @@ lqipWidth = "20x"
 smallLimit = "300"
 
 # Footer
-footer = "Powered by <a href=\"https://www.netlify.com/\">Netlify</a>, <a href=\"https://gohugo.io/\">Hugo</a>, and <a href=\"https://getdoks.org/\">Doks</a>"
+footer = "Copyright © 2021 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies.  Rendered with <a href=\"https://gohugo.io/\">Hugo</a>, and <a href=\"https://getdoks.org/\">Doks</a>"
 
 # Feed
 copyRight = "Copyright (c) 2019-2021 Cloud Hypervisor authors"
