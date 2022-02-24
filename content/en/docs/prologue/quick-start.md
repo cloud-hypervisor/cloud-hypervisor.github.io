@@ -18,8 +18,8 @@ toc: true
 We create a folder to build and run `cloud-hypervisor` at `$HOME/cloud-hypervisor`
 
 ```shell
-$ export CLOUDH=$HOME/cloud-hypervisor
-$ mkdir $CLOUDH
+export CLOUDH=$HOME/cloud-hypervisor
+mkdir $CLOUDH
 ```
 
 ## Install prerequisites
@@ -30,13 +30,13 @@ package manager and package name.
 
 ```shell
 # Install git
-$ sudo apt install git
+sudo apt install git
 # Install rust tool chain
-$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # Install build-essential
-$ sudo apt install build-essential
+sudo apt install build-essential
 # If you want to build statically linked binary please add musl target
-$ rustup target add x86_64-unknown-linux-musl
+rustup target add x86_64-unknown-linux-musl
 ```
 
 ## Clone and build
@@ -44,17 +44,17 @@ $ rustup target add x86_64-unknown-linux-musl
 First you need to clone and build the cloud-hypervisor repo:
 
 ```shell
-$ pushd $CLOUDH
-$ git clone https://github.com/cloud-hypervisor/cloud-hypervisor.git
-$ cd cloud-hypervisor
-$ cargo build --release
+pushd $CLOUDH
+git clone https://github.com/cloud-hypervisor/cloud-hypervisor.git
+cd cloud-hypervisor
+cargo build --release
 
 # We need to give the cloud-hypervisor binary the NET_ADMIN capabilities for it to set TAP interfaces up on the host.
-$ sudo setcap cap_net_admin+ep ./target/release/cloud-hypervisor
+sudo setcap cap_net_admin+ep ./target/release/cloud-hypervisor
 
 # If you want to build statically linked binary
-$ cargo build --release --target=x86_64-unknown-linux-musl --all
-$ popd
+cargo build --release --target=x86_64-unknown-linux-musl --all
+popd
 ```
 
 This will build a `cloud-hypervisor` binary under `$CLOUDH/cloud-hypervisor/target/release/cloud-hypervisor`.
@@ -69,9 +69,9 @@ first invocation, this script will pull a fairly large container image.
 For example, to build the Cloud Hypervisor release binary:
 
 ```shell
-$ pushd $CLOUDH
-$ cd cloud-hypervisor
-$ ./scripts/dev_cli.sh build --release
+pushd $CLOUDH
+cd cloud-hypervisor
+./scripts/dev_cli.sh build --release
 ```
 
 With `dev_cli.sh`, one can also run the Cloud Hypervisor CI locally. This can be
@@ -81,7 +81,7 @@ Cloud Hypervisor CI infrastructure.
 For example, to run the Cloud Hypervisor unit tests:
 
 ```shell
-$ ./scripts/dev_cli.sh tests --unit
+./scripts/dev_cli.sh tests --unit
 ```
 
 Run the `./scripts/dev_cli.sh --help` command to view all the supported
@@ -103,24 +103,24 @@ formatted KVM firmware for `cloud-hypervisor` to directly boot into.
 We need to get the latest `rust-hypervisor-firmware` release and also a working cloud image. Here we will use a Ubuntu image:
 
 ```shell
-$ pushd $CLOUDH
-$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
-$ qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw
-$ wget https://github.com/cloud-hypervisor/rust-hypervisor-firmware/releases/download/0.3.2/hypervisor-fw
-$ popd
+pushd $CLOUDH
+wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw
+wget https://github.com/cloud-hypervisor/rust-hypervisor-firmware/releases/download/0.3.2/hypervisor-fw
+popd
 ```
 
 ```shell
-$ pushd $CLOUDH
-$ sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
-$ ./cloud-hypervisor/target/release/cloud-hypervisor \
+pushd $CLOUDH
+sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
+./cloud-hypervisor/target/release/cloud-hypervisor \
 	--kernel ./hypervisor-fw \
 	--disk path=focal-server-cloudimg-amd64.raw \
 	--cpus boot=4 \
 	--memory size=1024M \
 	--net "tap=,mac=,ip=,mask=" \
 	--rng
-$ popd
+popd
 ```
 
 Multiple arguments can be given to the `--disk` parameter.
@@ -136,14 +136,14 @@ To build the kernel:
 ```shell
 
 # Clone the Cloud Hypervisor Linux branch
-$ pushd $CLOUDH
-$ git clone --depth 1 https://github.com/cloud-hypervisor/linux.git -b ch-5.14 linux-cloud-hypervisor
-$ pushd linux-cloud-hypervisor
+pushd $CLOUDH
+git clone --depth 1 https://github.com/cloud-hypervisor/linux.git -b ch-5.14 linux-cloud-hypervisor
+pushd linux-cloud-hypervisor
 
 # Use the cloud-hypervisor kernel config to build your kernel
-$ cp $CLOUDH/cloud-hypervisor/resources/linux-config-x86_64 .config
-$ make bzImage -j `nproc`
-$ popd
+cp $CLOUDH/cloud-hypervisor/resources/linux-config-x86_64 .config
+make bzImage -j `nproc`
+popd
 ```
 
 The `vmlinux` kernel image will then be located at `linux-cloud-hypervisor/arch/x86/boot/compressed/vmlinux.bin`.
@@ -153,10 +153,10 @@ The `vmlinux` kernel image will then be located at `linux-cloud-hypervisor/arch/
 For the disk image, we will use a Ubuntu cloud image that contains a root partition:
 
 ```shell
-$ pushd $CLOUDH
-$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
-$ qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw
-$ popd
+pushd $CLOUDH
+wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw
+popd
 ```
 
 #### Booting the guest VM
@@ -165,9 +165,9 @@ Now we can directly boot into our custom kernel and make it use the Ubuntu root 
 If we want to have 4 vCPUs and 1024 MBytes of memory:
 
 ```shell
-$ pushd $CLOUDH
-$ sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
-$ ./cloud-hypervisor/target/release/cloud-hypervisor \
+pushd $CLOUDH
+sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
+./cloud-hypervisor/target/release/cloud-hypervisor \
 	--kernel ./linux-cloud-hypervisor/arch/x86/boot/compressed/vmlinux.bin \
 	--disk path=focal-server-cloudimg-amd64.raw \
 	--cmdline "console=hvc0 root=/dev/vda1 rw" \
@@ -185,7 +185,7 @@ When in need for earlier debug messages, using the legacy serial device based
 console is preferred:
 
 ```
-$ ./cloud-hypervisor/target/release/cloud-hypervisor \
+./cloud-hypervisor/target/release/cloud-hypervisor \
 	--kernel ./linux-cloud-hypervisor/arch/x86/boot/compressed/vmlinux.bin \
 	--console off \
 	--serial tty \
