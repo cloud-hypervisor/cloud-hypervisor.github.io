@@ -19,6 +19,8 @@ We create a folder to build and run `cloud-hypervisor` at `$HOME/cloud-hyperviso
 
 ```shell
 export CLOUDH=$HOME/cloud-hypervisor
+# Add this to .bashrc so it is available for subsequent bash sessions
+echo "export CLOUDH=$HOME/cloud-hypervisor" >> ~/.bashrc
 mkdir $CLOUDH
 ```
 
@@ -35,7 +37,15 @@ sudo apt install git
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # Install build-essential
 sudo apt install build-essential
+# Install qemu
+apt install qemu qemu-utils
+```
+
+You will need to restart bash to get `rustup` into your path, or add it manually.
+
+```shell
 # If you want to build statically linked binary please add musl target
+apt install musl musl-tools
 rustup target add x86_64-unknown-linux-musl
 ```
 
@@ -119,7 +129,7 @@ sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
 	--cpus boot=4 \
 	--memory size=1024M \
 	--net "tap=,mac=,ip=,mask=" \
-	--rng
+	--rng src=/dev/urandom
 popd
 ```
 
@@ -174,7 +184,7 @@ sudo setcap cap_net_admin+ep ./cloud-hypervisor/target/release/cloud-hypervisor
 	--cpus boot=4 \
 	--memory size=1024M \
 	--net "tap=,mac=,ip=,mask=" \
-	--rng
+	--rng src=/dev/urandom
 ```
 
 The above example use the `virtio-console` device as the guest console, and this
@@ -194,5 +204,5 @@ console is preferred:
 	--cpus boot=4 \
 	--memory size=1024M \
 	--net "tap=,mac=,ip=,mask=" \
-	--rng
+	--rng src=/dev/urandom
 ```
