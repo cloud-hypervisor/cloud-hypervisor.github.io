@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.9.0.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js">
+    </script>
+</head>
+
+<body>
+    <div id="plots"></div>
+    <script>
+        async function populate() {
+            let response = await fetch("https://cloud-hypervisor-metrics.azurewebsites.net/api/getmetricsnames");
+
+            if (response.ok) {
+                let metrics = await response.json();
+                let plots_div = document.getElementById("plots");
+
+                for (let i in metrics) {
+                    let metric_name = metrics[i];
+                    let plot_div = document.createElement("div");
+                    plot_div.id = "plot_" + metric_name;
+                    plots_div.appendChild(plot_div);
+
+                    d3.json(`https://cloud-hypervisor-metrics.azurewebsites.net/api/getmetrics?metric_name=${metric_name}`, function (err, rows) {
+                        function unpack(rows, key) {
+                            return rows.map(function (row) { return row[key]; });
+                        }
+
+                        let trace = {
+                            type: "scatter",
+                            name: "mean",
+                            x: unpack(rows, 'git_commit_date_sortable'),
+                            y: unpack(rows, 'mean'),
+                            text: unpack(rows, "git_revision")
+                        }
+
+                        let data = [trace];
+                        let layout = {
+                            title: metric_name,
+                        };
+
+                        Plotly.newPlot('plot_' + metric_name, data, layout);
+                    })
+                }
+            }
+        }
+
+        populate();
+    </script>
+</body>
+
+</html>
