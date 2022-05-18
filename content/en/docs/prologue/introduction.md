@@ -36,7 +36,6 @@ Here are some documents related to particular features and functionality that a 
 * [Live migration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/live_migration.md)
 * [Using a MACvTAP bridge to place a VM on the host network](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/macvtap-bridge.md)
 * [Advanced memory configuration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/memory.md)
-* [Advanced networking configuration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/networking.md)
 * [Snapshot & Restore of a VM](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/snapshot_restore.md)
 * [Building a UEFI firmware for use with Cloud Hypervisor](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/uefi.md)
 * [Using VFIO to passthrough PCI devices](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/vfio.md)
