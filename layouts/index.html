@@ -74,7 +74,7 @@
             <div class="card-body">
               <article>
                 <div class="blog-header">
-                  <h2><a class="stretched-link text-body" href="{{ .RelPermalink }}">{{ .Params.title }}</a></h2>
+                  <h2><a href="{{ .RelPermalink }}">{{ .Params.title }}</a></h2>
                   {{ partial "main/blog-meta.html" . }}
                 </div>
                 <p class="lead">{{ .Params.lead | safeHTML }}</p>
