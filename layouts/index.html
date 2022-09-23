@@ -67,6 +67,31 @@
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-12 col-lg-10 col-xl-8">
+        <h2 class="h3 mt-3 text-center">Get Involved:</h2>
+
+        <p>Cloud Hypervisor is governed openly as part of the Linux Foundation and supported by multiple organisations:
+        </p>
+        <ul>
+          <li>Alibaba</li>
+          <li>ARM</li>
+          <li>ByteDance</li>
+          <li>Intel</li>
+          <li>Microsoft</li>
+        </ul>
+
+        <p></p>Join our Slack community: <a
+          href="https://join.slack.com/t/cloud-hypervisor/shared_invite/enQtNjY3MTE3MDkwNDQ4LWQ1MTA1ZDVmODkwMWQ1MTRhYzk4ZGNlN2UwNTI3ZmFlODU0OTcwOWZjMTkwZDExYWE3YjFmNzgzY2FmNDAyMjI">Invite</a>
+        </p>
+        <p>Check out and participate in our <a href="https://github.com/orgs/cloud-hypervisor/projects/6">roadmap on
+            GitHub</a>
+        </p>
+        <p>For full details of our governance model please see our <a
+            href="https://github.com/cloud-hypervisor/community">community repository on GitHub</a> and our
+          <a href="https://github.com/cloud-hypervisor/community/blob/master/technical-charter.pdf">founding
+            charter</a>.
+        </p>
+      </div>
+      <div class="col-md-12 col-lg-10 col-xl-8">
         <h2 class="h3 mt-3 text-center">Latest news from Cloud Hypervisor project:</h2>
         <div class="card-list">
           {{ range first 1 (where .Site.RegularPages.ByDate.Reverse "Section" "blog") -}}
