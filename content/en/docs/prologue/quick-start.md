@@ -13,10 +13,12 @@ weight: 110
 toc: true
 ---
 
-The following sections describe how to build and run Cloud Hypervisor on the
-`x86-64` platform. For getting started on the `AArch64` platform, please refer
-to the
-[AArch64 specific documentation](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/arm64.md).
+The following sections describe how to build and run Cloud Hypervisor.
+
+## Prerequisites for AArch64
+
+- AArch64 servers (recommended) or development boards equipped with the GICv3
+  interrupt controller.
 
 ## Host OS
 
@@ -48,13 +50,10 @@ Please see the [instructions for building from source](https://github.com/cloud-
 
 ## Booting Linux
 
-The instructions below are for the `x86-64` platform. For `AArch64` please see
-the [AArch64 specific documentation](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/arm64.md).
-
-Cloud Hypervisor supports direct kernel boot (if the kernel is built with PVH
-support) or booting via a firmware (either [Rust Hypervisor
+Cloud Hypervisor supports direct kernel boot (the x86-64 kernel requires the kernel
+built with PVH support) or booting via a firmware (either [Rust Hypervisor
 Firmware](https://github.com/cloud-hypervisor/rust-hypervisor-firmware) or an
-edk2 UEFI firmware called `CLOUDHV`.)
+edk2 UEFI firmware called `CLOUDHV` / `CLOUDHV_EFI`.)
 
 Binary builds of the firmware files are available for the latest release of
 [Rust Hyperivor
@@ -116,7 +115,7 @@ $ ./cloud-hypervisor \
 
 #### Building your Kernel
 
-Cloud Hypervisor also supports direct kernel boot into a `vmlinux` ELF kernel (compiled with PVH support). In order to support development there is a custom branch; however provided the required options are enabled any recent kernel will suffice.
+Cloud Hypervisor also supports direct kernel boot. For x86-64, a `vmlinux` ELF kernel (compiled with PVH support) is needed. In order to support development there is a custom branch; however provided the required options are enabled any recent kernel will suffice.
 
 To build the kernel:
 
@@ -124,15 +123,23 @@ To build the kernel:
 # Clone the Cloud Hypervisor Linux branch
 $ git clone --depth 1 https://github.com/cloud-hypervisor/linux.git -b ch-5.15.12 linux-cloud-hypervisor
 $ pushd linux-cloud-hypervisor
-# Use the cloud-hypervisor kernel config to build your kernel
+# Use the x86-64 cloud-hypervisor kernel config to build your kernel for x86-64
 $ wget https://raw.githubusercontent.com/cloud-hypervisor/cloud-hypervisor/main/resources/linux-config-x86_64
-$ cp linux-config-x86_64 .config
+# Use the AArch64 cloud-hypervisor kernel config to build your kernel for AArch64
+$ wget https://raw.githubusercontent.com/cloud-hypervisor/cloud-hypervisor/main/resources/linux-config-aarch64
+$ cp linux-config-x86_64 .config  # x86-64
+$ cp linux-config-aarch64 .config # AArch64
+# Do native build of the x86-64 kernel
 $ KCFLAGS="-Wa,-mx86-used-note=no" make bzImage -j `nproc`
+# Do native build of the AArch64 kernel
+$ make -j `nproc`
 $ popd
 ```
 
-The `vmlinux` kernel image will then be located at
+For x86-64, the `vmlinux` kernel image will then be located at
 `linux-cloud-hypervisor/arch/x86/boot/compressed/vmlinux.bin`.
+For AArch64, the `Image` kernel image will then be located at
+`linux-cloud-hypervisor/arch/arm64/boot/Image`.
 
 #### Disk image
 
@@ -140,14 +147,18 @@ For the disk image the same Ubuntu image as before can be used. This contains
 an `ext4` root filesystem.
 
 ```shell
-$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
-$ qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw
+$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img # x86-64
+$ wget https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-arm64.img # AArch64
+$ qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-amd64.img focal-server-cloudimg-amd64.raw # x86-64
+$ qemu-img convert -p -f qcow2 -O raw focal-server-cloudimg-arm64.img focal-server-cloudimg-arm64.raw # AArch64
 ```
 
 #### Booting the guest VM
 
 These sample commands boot the disk image using the custom kernel whilst also
 supplying the desired kernel command line.
+
+- x86-64
 
 ```shell
 $ sudo setcap cap_net_admin+ep ./cloud-hypervisor
@@ -161,14 +172,45 @@ $ ./cloud-hypervisor \
 	--net "tap=,mac=,ip=,mask="
 ```
 
+- AArch64
+
+```shell
+$ sudo setcap cap_net_admin+ep ./cloud-hypervisor
+$ ./create-cloud-init.sh
+$ ./cloud-hypervisor \
+	--kernel ./linux-cloud-hypervisor/arch/arm64/boot/Image \
+	--disk path=focal-server-cloudimg-arm64.raw path=/tmp/ubuntu-cloudinit.img \
+	--cmdline "console=hvc0 root=/dev/vda1 rw" \
+	--cpus boot=4 \
+	--memory size=1024M \
+	--net "tap=,mac=,ip=,mask="
+```
+
 If earlier kernel messages are required the serial console should be used instead of `virtio-console`.
 
-```./cloud-hypervisor \
+- x86-64
+
+```shell
+$ ./cloud-hypervisor \
 	--kernel ./linux-cloud-hypervisor/arch/x86/boot/compressed/vmlinux.bin \
 	--console off \
 	--serial tty \
 	--disk path=focal-server-cloudimg-amd64.raw \
 	--cmdline "console=ttyS0 root=/dev/vda1 rw" \
+	--cpus boot=4 \
+	--memory size=1024M \
+	--net "tap=,mac=,ip=,mask="
+```
+
+- AArch64
+
+```shell
+$ ./cloud-hypervisor \
+	--kernel ./linux-cloud-hypervisor/arch/arm64/boot/Image \
+	--console off \
+	--serial tty \
+	--disk path=focal-server-cloudimg-arm64.raw \
+	--cmdline "console=ttyAMA0 root=/dev/vda1 rw" \
 	--cpus boot=4 \
 	--memory size=1024M \
 	--net "tap=,mac=,ip=,mask="
