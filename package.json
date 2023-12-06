@@ -54,7 +54,7 @@
     "node-fetch": "^3.0",
     "mermaid": "^10.0",
     "postcss": "^8.3",
-    "postcss-cli": "^10.0",
+    "postcss-cli": "^11.0",
     "purgecss-whitelister": "^2.4",
     "shx": "^0.3.3",
     "stylelint": "^15.0",
