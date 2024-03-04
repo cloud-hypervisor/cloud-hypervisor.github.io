@@ -10,7 +10,7 @@
     <div id="plots"></div>
     <script>
         async function populate() {
-            let response = await fetch("https://cloud-hypervisor-metrics.azurewebsites.net/api/getmetricsnames");
+            let response = await fetch("https://ch-metrics.azurewebsites.net/api/getmetricsnames");
 
             if (response.ok) {
                 let metrics = await response.json();
@@ -22,7 +22,7 @@
                     plot_div.id = "plot_" + metric_name;
                     plots_div.appendChild(plot_div);
 
-                    d3.json(`https://cloud-hypervisor-metrics.azurewebsites.net/api/getmetrics?metric_name=${metric_name}`, function (err, rows) {
+                    d3.json(`https://ch-metrics.azurewebsites.net/api/getmetrics?metric_name=${metric_name}`, function (err, rows) {
                         function unpack(rows, key) {
                             return rows.map(function (row) { return row[key]; });
                         }
