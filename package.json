@@ -52,7 +52,7 @@
     "lazysizes": "^5.3",
     "markdownlint-cli": "^0.41",
     "node-fetch": "^3.0",
-    "mermaid": "^10.0",
+    "mermaid": "^11.0",
     "postcss": "^8.3",
     "postcss-cli": "^11.0",
     "purgecss-whitelister": "^2.4",
