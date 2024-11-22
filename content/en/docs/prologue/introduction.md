@@ -41,6 +41,7 @@ Here are some documents related to particular features and functionality that a 
 * [Emulated NVMe controller via vfio-user](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/vfio-user.md)
 * [Using virtio-fs as as a root filesystem](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/virtiofs-root.md)
 * [Running and debugging Windows guests](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/windows.md)
+
 ### Developer documentation
 
 These documents are primarily for developers who are working on the project:
@@ -52,7 +53,6 @@ These documents are primarily for developers who are working on the project:
 * [Seccomp filter debugging](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/seccomp.md)
 * [Testing vhost-user-block](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/vhost-user-blk-testing.md)
 * [Testing vhost-user-net](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/vhost-user-net-testing.md)
-  
 
 ## Contributing
 
