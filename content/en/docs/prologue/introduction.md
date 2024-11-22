@@ -15,7 +15,7 @@ toc: true
 
 ## Quick Start
 
-See the [Quick Start →]({{< relref "quick-start" >}}) for a single page guide to getting started with Cloud Hypevisor.
+See the [Quick Start →]({{< relref "quick-start" >}}) for a single page guide to getting started with Cloud Hypervisor.
 
 ## Go further
 
