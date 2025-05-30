@@ -55,14 +55,9 @@ GRUB) is required then it necessary to switch to the serial console instead of
 	--serial tty \
 	--console off
 </code></pre><h3 id=custom-kernel-and-disk-image>Custom Kernel and Disk Image <a href=#custom-kernel-and-disk-image class=anchor aria-hidden=true>#</a></h3><h4 id=building-your-kernel>Building your Kernel <a href=#building-your-kernel class=anchor aria-hidden=true>#</a></h4><p>Cloud Hypervisor also supports direct kernel boot. For x86-64, a <code>vmlinux</code> ELF kernel (compiled with PVH support) is needed. In order to support development there is a custom branch; however provided the required options are enabled any recent kernel will suffice.</p><p>To build the kernel:</p><pre><code class=language-shell># Clone the Cloud Hypervisor Linux branch
-$ git clone --depth 1 https://github.com/cloud-hypervisor/linux.git -b ch-6.2 linux-cloud-hypervisor
+$ git clone --depth 1 https://github.com/cloud-hypervisor/linux.git -b ch-6.12.8 linux-cloud-hypervisor
 $ pushd linux-cloud-hypervisor
-# Use the x86-64 cloud-hypervisor kernel config to build your kernel for x86-64
-$ wget https://raw.githubusercontent.com/cloud-hypervisor/cloud-hypervisor/main/resources/linux-config-x86_64
-# Use the AArch64 cloud-hypervisor kernel config to build your kernel for AArch64
-$ wget https://raw.githubusercontent.com/cloud-hypervisor/cloud-hypervisor/main/resources/linux-config-aarch64
-$ cp linux-config-x86_64 .config  # x86-64
-$ cp linux-config-aarch64 .config # AArch64
+$ make ch_defconfig
 # Do native build of the x86-64 kernel
 $ KCFLAGS=&quot;-Wa,-mx86-used-note=no&quot; make bzImage -j `nproc`
 # Do native build of the AArch64 kernel
@@ -116,4 +111,4 @@ $ ./cloud-hypervisor \
 </code></pre><div class="docs-navigation d-flex justify-content-between"><a href=https://www.cloudhypervisor.org/docs/prologue/introduction/><div class="card my-1"><div class="card-body py-2">&larr; Introduction</div></div></a><a class=ms-auto href=https://www.cloudhypervisor.org/docs/prologue/commands/><div class="card my-1"><div class="card-body py-2">Commands &rarr;</div></div></a></div></main></div></div></div><footer class="footer text-muted"><div class=container-xxl><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Copyright © 2021 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies. Rendered with <a href=https://gohugo.io/>Hugo</a>, and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://www.cloudhypervisor.org/js/bootstrap.min.9aa675cdf282c8fd3a24715485ec67abffa1b5c2c37f33451ceaa338cc139ab9eadb1f528db0ea103b070cd560c8efffccfd2e75025fb81a715ed03776f68e75.js integrity="sha512-mqZ1zfKCyP06JHFUhexnq/+htcLDfzNFHOqjOMwTmrnq2x9SjbDqEDsHDNVgyO//zP0udQJfuBpxXtA3dvaOdQ==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/js/highlight.min.a4326e9fb7fe7186d35cef8cf9efadc53041724dc47c3d9786f4e8794d0e12eb623ecb3ca27f8912915a9a7195f9ababe5bc1ff3b23e3aabebeb52ff7a3fac0f.js integrity="sha512-pDJun7f+cYbTXO+M+e+txTBBck3EfD2XhvToeU0OEutiPss8on+JEpFamnGV+aur5bwf87I+Oqvr61L/ej+sDw==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/main.min.cfa136509b4690212e37c116f5afc6938cf1c5d28348366a61feee1302c067a6e6892a265334fa686ec8cb6c64b2b94d8e269c5fabb6bd568c604ac0a1dc1c9b.js integrity="sha512-z6E2UJtGkCEuN8EW9a/Gk4zxxdKDSDZqYf7uEwLAZ6bmiSomUzT6aG7Iy2xksrlNjiacX6u2vVaMYErAodwcmw==" crossorigin=anonymous defer></script>
-<script src=https://www.cloudhypervisor.org/index.min.a9631ad39266cffd89b2773e3d5bca87b9d1a6a9d78d13cc24aaa4d84df74e850c49409308ff5fd30639c524a6693826e39f0adeb1b2864ea00f7c79097ed586.js integrity="sha512-qWMa05Jmz/2Jsnc+PVvKh7nRpqnXjRPMJKqk2E33ToUMSUCTCP9f0wY5xSSmaTgm458K3rGyhk6gD3x5CX7Vhg==" crossorigin=anonymous defer></script></body></html>
+<script src=https://www.cloudhypervisor.org/index.min.f85e72c4d9c92e0d071d4377e0bc0fbe8af3e882783f94e9ea54caea3d0836b9772f181817d118304a53946e32f01f01aa4ae9451c7ccf7c4089447ab915f819.js integrity="sha512-+F5yxNnJLg0HHUN34LwPvorz6IJ4P5Tp6lTK6j0INrl3LxgYF9EYMEpTlG4y8B8BqkrpRRx8z3xAiUR6uRX4GQ==" crossorigin=anonymous defer></script></body></html>
