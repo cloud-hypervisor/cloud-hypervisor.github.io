@@ -29,7 +29,6 @@ Here are some documents related to particular features and functionality that a 
 * [Virtual CPU configuration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/cpu.md)
 * [Using virtio-fs](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/fs.md)
 * [How to hotplug devices](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/hotplug.md)
-* [How to use Intel SGX](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/intel_sgx.md)
 * [vIOMMU configuration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/iommu.md)
 * [I/O throttling for network and block devices](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/io_throttling.md)
 * [Live migration](https://github.com/cloud-hypervisor/cloud-hypervisor/blob/main/docs/live_migration.md)
