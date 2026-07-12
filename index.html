@@ -4,117 +4,80 @@
 GitHub</a></p><p>For full details of our governance model please see our <a href=https://github.com/cloud-hypervisor/community>community repository on GitHub</a> and our
 <a href=https://github.com/cloud-hypervisor/community/blob/master/technical-charter.pdf>founding
 charter</a>.</p><p>For bug reports please use <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/issues>GitHub
-isssues</a>; for broader community discussions please use our <a href=https://lists.cloudhypervisor.org/g/dev>mailing list</a></p></div><div class="col-md-12 col-lg-10 col-xl-8"><h2 class="h3 mt-3 text-center">Latest news from Cloud Hypervisor project:</h2><div class=card-list><div class=card><div class=card-body><article><div class=blog-header><h2><a href=https://www.cloudhypervisor.org/blog/cloud-hypervisor-v52.0-released/>Cloud Hypervisor v52.0 Released!</a></h2><p><small>Posted May 14, 2026 by <a class="stretched-link position-relative" href=https://www.cloudhypervisor.org/contributors/cloud-hypervisor-team/>Cloud Hypervisor Team</a>&nbsp;&dash;&nbsp;<strong>8&nbsp;min read</strong></small><p></div><p class=lead></p><p>This release has been tracked in <a href="https://github.com/orgs/cloud-hypervisor/projects/6/views/6?filterQuery=release%3A%22Release+52%22">v52.0 group</a> of our <a href=https://github.com/orgs/cloud-hypervisor/projects/6/>roadmap project</a>.</p><h2 id=security-fixes>Security Fixes <a href=#security-fixes class=anchor aria-hidden=true>#</a></h2><p>This release fixes a use-after-free vulnerability in the
-<code>virtio-block</code> async I/O completion path (#8220). Details can be found
-in GHSA-f47p-p25q-83rh (CVE-2026-45782).</p><h2 id=confidential-vm-support-kvm-sev-snp>Confidential VM Support: KVM SEV-SNP <a href=#confidential-vm-support-kvm-sev-snp class=anchor aria-hidden=true>#</a></h2><p>AMD SEV-SNP confidential VMs can now be launched on KVM in addition to
-MSHV. Cloud Hypervisor uses <code>guest_memfd</code> to back private memory and
-loads an IGVM-packaged firmware (e.g. Oak stage0) to bring up an
-SEV-SNP guest on real hardware (#7942).</p><p>Measured-boot support has been completed for KVM SEV-SNP guests,
-bringing parity with the QEMU launch flow: the kernel, command line,
-and initrd are reflected in the launch measurement, and a signed SNP
-ID block can be passed so the guest (or a remote attestor) can verify
-the launch (#8123).</p><h2 id=vfio-device-passthrough-via-iommufd-and-vfio-cdev>VFIO Device Passthrough via <code>iommufd</code> and <code>vfio-cdev</code> <a href=#vfio-device-passthrough-via-iommufd-and-vfio-cdev class=anchor aria-hidden=true>#</a></h2><p>Cloud Hypervisor now supports the modern Linux VFIO device-access
-model based on the <code>iommufd</code> subsystem and per-device <code>vfio-cdev</code>
-character devices (available since Linux v6.6). This unlocks the
-advanced IOMMU features exposed by modern hardware and enables fully
-accelerated IOMMU support inside the guest. The legacy
-<code>container/group</code>-based path continues to be supported (#7981).</p><p>In addition, several VFIO/PCI improvements have landed:</p><ul><li>A new <code>host_mmap_bars</code> option allows selective mapping of VFIO BARs
-into the guest, so devices that expose registers that should not be
-fast-pathed can be selectively trapped (#7991).</li><li>Sub-page VFIO BARs are now expanded to a full page for <code>mmap()</code>,
-avoiding spurious failures on devices with small BARs (#7939).</li><li><code>VfioMsix::cap</code> and <code>VfioMsix::bar</code> are now kept synchronized to
-avoid stale MSI-X state (#7993).</li><li>VFIO MMIO regions are now reliably cleared in <code>DeviceManager::drop</code>
-(#8063).</li><li>Deferred PCI BAR reprogramming state is now part of the saved
-device state (#7945).</li><li>GSIs for MSI/MSI-X interrupt vectors are now allocated lazily,
-reducing GSI consumption for VMs with many devices (#7940).</li></ul><h2 id=multi-connection-tcp-live-migration>Multi-Connection TCP Live Migration <a href=#multi-connection-tcp-live-migration class=anchor aria-hidden=true>#</a></h2><p>The <code>send-migration</code> HTTP command now accepts a <code>connections</code>
-parameter (defaults to <code>1</code>) that controls how many parallel TCP
-connections are used for the live migration data transfer. On
-servers with high-bandwidth (e.g. 100G) network links, multiple
-connections significantly increase migration throughput (#7669).</p><h2 id=userfaultfd-demand-paged-snapshot-restore>Userfaultfd Demand-Paged Snapshot Restore <a href=#userfaultfd-demand-paged-snapshot-restore class=anchor aria-hidden=true>#</a></h2><p>A new <code>memory_restore_mode</code> option on the restore path allows guest
-memory to be populated lazily via <code>userfaultfd</code> instead of reading
-the entire memory snapshot before the VM resumes. This dramatically
-reduces restore-to-resume latency for large guests, at the cost of
-faulting pages in on demand after resume (#7800).</p><h2 id=configurable-pci-bdfs-for-devices>Configurable PCI BDFs for Devices <a href=#configurable-pci-bdfs-for-devices class=anchor aria-hidden=true>#</a></h2><p>Users now can configure the PCI slot/device number, the middle
-part of the PCI BDF, through the CLI and API; bus and function
-remain fixed at <code>0</code>. This covers virtio devices (except balloon),
-VFIO devices, vfio-user device, and generic vhost-user devices
-(#8175, #7965, #8174, #8163).</p><h2 id=aio-block-backend-write_zeroes-and-punch_hole-support>AIO Block Backend <code>write_zeroes</code> and <code>punch_hole</code> Support <a href=#aio-block-backend-write_zeroes-and-punch_hole-support class=anchor aria-hidden=true>#</a></h2><p>The AIO block backend now implements <code>write_zeroes</code> and <code>punch_hole</code>,
-fixing a v51.0 regression that affected guests on hosts with
-<code>io_uring</code> disabled (e.g. RHEL 9 / CentOS Stream 9, where
-<code>kernel.io_uring_disabled=2</code> is a common hardening default)
-(#7817).</p><h2 id=asynchronous-qcow2-backend-with-io_uring>Asynchronous QCOW2 Backend with <code>io_uring</code> <a href=#asynchronous-qcow2-backend-with-io_uring class=anchor aria-hidden=true>#</a></h2><p>A new <code>QcowDiskAsync</code> backend uses <code>io_uring</code> for data I/O on QCOW2
-images and is automatically selected when <code>io_uring</code> is available
-(falling back to the synchronous backend otherwise). Each virtio
-queue gets its own ring and its own duplicated file descriptor,
-enabling parallel data I/O across queues; QCOW2 metadata is shared
-behind an <code>Arc&lt;RwLock&lt;_>></code> (#7882).</p><h2 id=generic-vhost-user-device-support>Generic <code>vhost-user</code> Device Support <a href=#generic-vhost-user-device-support class=anchor aria-hidden=true>#</a></h2><p>A new generic <code>vhost-user-generic</code> device type has been added.
-All information about the device (number of queues, queue size,
-feature bits, etc.) is provided to Cloud Hypervisor via the
-command line or API, allowing arbitrary vhost-user backends to be
-attached without device-type-specific support in the VMM (#7221).</p><h2 id=core-scheduling-for-vcpu-threads>Core Scheduling for vCPU Threads <a href=#core-scheduling-for-vcpu-threads class=anchor aria-hidden=true>#</a></h2><p>A new <code>core_scheduling</code> option on <code>--cpus</code> controls how vCPU threads
-are placed on SMT siblings via the kernel&rsquo;s core-scheduling feature,
-which is useful for mitigating cross-thread side-channel attacks
-without disabling SMT outright. Three modes are supported: <code>vm</code>
-(default — all vCPU threads share one cookie), one-cookie-per-vCPU,
-and a configurable grouping mode (#7747).</p><h2 id=snapshotrestore-and-live-migration-improvements>Snapshot/Restore and Live Migration Improvements <a href=#snapshotrestore-and-live-migration-improvements class=anchor aria-hidden=true>#</a></h2><ul><li>Snapshot and restore now treat the memory backing file as a sparse
-file: on snapshot the backing FD is sought with
-<code>SEEK_DATA</code>/<code>SEEK_HOLE</code> to skip unallocated regions, and on restore
-the on-disk file is read as sparse. Pages the guest never touched
-remain as holes in the backing file, substantially reducing both
-snapshot size and restore time (#8113).</li><li>Paused VMs can now be migrated (#8099).</li><li>User-configurable downtime and timeout parameters for live
-migration (#7835), and improved downtime observability (#7979).</li><li>A new option to automatically resume the VM on restore, useful
-when restoring from the VMM command line without an API socket
-(#7857).</li><li>Snapshot/restore support for <code>vhost-user</code> devices has been filled
-out (#7908), including migration support for <code>virtio-fs</code> (#7937).</li><li>Vsock connections are now reset on snapshot restore to avoid stale
-half-open connections on the guest side (#7958).</li><li>The KVM clock is now restored before vCPUs are resumed (#7932),
-and <code>notify_guest_clock_paused</code> is called for Hyper-V guests
-(#7933), eliminating clock jumps observed after restore.</li><li><code>vhost-user</code> devices receive a guest interrupt on resume so that
-in-flight I/O is not stalled across pause/resume (#7851), and
-activated queue eventfds are signaled on resume for all virtio
-devices (#8004).</li><li><code>UFFDIO_WAKE</code> and <code>UFFD_FEATURE_MISSING_HUGETLBFS</code> are now handled
-correctly (#8016).</li></ul><h2 id=new-command-line-and-api-options>New Command-Line and API Options <a href=#new-command-line-and-api-options class=anchor aria-hidden=true>#</a></h2><ul><li><code>--no-shutdown</code> keeps the VMM process running when the guest
-triggers a shutdown. This is useful for higher-level management
-layers that need full control over the VMM process (#8025).</li><li>fw_cfg now supports inline string items via
-<code>--fw-cfg name=...,string=...</code>, matching QEMU&rsquo;s syntax (#7825).</li><li>A new per-zone <code>mergeable</code> option on <code>--memory-zone</code> lets KSM
-merging be controlled per memory zone instead of only globally
-(#7983).</li><li>Disk lock granularity is now configurable via <code>--disk</code> (#7763).</li><li><code>--cpus threads_per_core</code> is now enforced to be at most two
-(#8078), matching the hardware constraint.</li><li><code>--log-format</code> controls the log output format, complementing
-existing log-level controls (#8172). Wallclock log timestamps
-now use UTC (#8193).</li><li>The HTTP API now logs error responses (#8181), and the
-<code>user_devices</code> configuration is included in the OpenAPI spec
-(#8072).</li></ul><h2 id=mshv-support-improvements>MSHV Support Improvements <a href=#mshv-support-improvements class=anchor aria-hidden=true>#</a></h2><ul><li><code>SVM_EXIT_CPUID</code>, <code>SVM_EXIT_MSR</code>, and <code>GHCB_MSR_TERM_REQ</code> handlers
-have been added to the SEV-SNP exit path (#7934).</li><li>Guest MTRR MSRs are now preserved on KVM (#7944).</li><li>Nested-virtualization control fixes on AMD (#7783).</li></ul><h2 id=deprecations>Deprecations <a href=#deprecations class=anchor aria-hidden=true>#</a></h2><p>Auto-detection of disk image types is now deprecated and will be
-removed in a future release. Specify the image type explicitly via
-the <code>--disk image_type=...</code> CLI option or the <code>image_type</code> field
-on <code>DiskConfig</code> in the HTTP/D-Bus API to avoid the deprecation
-warning (#8219).</p><h2 id=notable-bug-fixes>Notable Bug Fixes <a href=#notable-bug-fixes class=anchor aria-hidden=true>#</a></h2><ul><li>Fix a guest-triggerable VMM panic via an out-of-bounds
-<code>queue_select</code> in the MSI-X vector access path on the virtio PCI
-common config (#7918).</li><li>Saturate instead of underflowing on a malformed balloon <code>actual</code>
-value reported by the guest (#7903).</li><li>IOMMU address translation now returns errors instead of panicking
-on malformed guest input (#8023).</li><li>Several virtio device error paths now reset queues instead of
-panicking or exiting the worker (#8128); additional device
-manager paths avoid guest-induced panics (#8186).</li><li>Virtio barriers are now sized from the number of queues actually
-activated by the guest, fixing pause hangs (#7881).</li><li>Spec compliance fixes for virtio device config layouts (#7805).
-and other small spec deviations (#8066). Console descriptor-chain
-processing has been fixed (#7802). dword writes to the MSI-X
-control register are now handled (#7956).</li><li>PCI segment ACPI <code>_UID</code> values now match the segment ID (#7992).</li><li>Fix VHDX multiqueue data corruption (#7746).</li><li>Fix block-device resize-disk (#7948) and the writeback-mode
-update flow (#7949).</li><li>Fix vdpa RX failure after device reset by always using base 0
-(#7964).</li><li>Fix rebooting with landlock and a pty console (#7911).</li><li>Reject rate limiting with <code>vhost-user</code> (#8135).</li><li>Fix a deadlock between <code>CpuManager::pause()</code> and MMIO writes to
-the ACPI CPU hotplug controller (#7990, #8092).</li><li>Cancel <code>vhost-user</code> reconnection if the device has been unplugged
-(#8182).</li><li>Remove the API socket path when <code>start_vmm</code> fails (#8018).</li><li>Add missing ID validation for the virtio-rng device (#9a46affc3).</li><li>Fix UB in <code>MemoryRangeTable::read_from</code> (#7828) and <code>load_igvm()</code>
-(#8129).</li><li><code>memory_actual_size</code> reflects hot-plug state, removing a slow
-recomputation path (#7969).</li><li>DIO alignment is now queried directly from the underlying file
-rather than assumed (#7767).</li><li>QCOW2 metadata access is now thread-safe with <code>num_queues > 1</code>
-(#7744).</li><li>Block devices unconditionally assume sparse support, matching
-QEMU and avoiding a non-existent probe ioctl (#7757).</li><li>Multi-value CLI options now use <code>.action(ArgAction::Append)</code> so
-that repeating an option appends rather than replacing (#7778).</li><li>AIO completions are batched in <code>next_completed_request</code> for the
-block backend, reducing per-completion overhead (#7864).</li><li>Roll back the PCI BAR address on a failed <code>move_bar</code> so that an
-out-of-range MMIO address programmed by the guest leaves the
-device functional rather than crashing the VMM (#7950).</li><li>Fix O_DIRECT writes failing with <code>EINVAL</code> on the synchronous
-QCOW2 backend (#8012).</li><li>Fix O_DIRECT reads failing with <code>EINVAL</code> on the async <code>io_uring</code>
-QCOW2 read path (#8051).</li><li>Move QCOW2 compressed-cluster decompression out of the metadata
-lock, removing a bottleneck for compressed images (#8061).</li><li>Clamp the balloon&rsquo;s reported range to its region before
-processing unused pages (#8098).</li><li>Validate the requested balloon size against total guest RAM
-(#8116).</li><li>Reject <code>--memory-zone</code> configurations that set both <code>mergeable</code>
-and <code>shared</code> (#8126).</li><li>Disable sector 0 writes for autodetected VHD images (#8218).</li></ul><h2 id=contributors>Contributors <a href=#contributors class=anchor aria-hidden=true>#</a></h2><p>Many thanks to everyone who has contributed to our release:</p><ul><li>Alyssa Ross <a href=mailto:hi@alyssa.is>hi@alyssa.is</a></li><li>Anatol Belski <a href=mailto:anbelski@linux.microsoft.com>anbelski@linux.microsoft.com</a></li><li>Andrei Vagin <a href=mailto:avagin@google.com>avagin@google.com</a></li><li>Anirudh Rayabharam <a href=mailto:anrayabh@microsoft.com>anrayabh@microsoft.com</a></li><li>Bo Chen <a href=mailto:bchen@crusoe.ai>bchen@crusoe.ai</a></li><li>CMGS <a href=mailto:ilskdw@gmail.com>ilskdw@gmail.com</a></li><li>Changyuan Lyu <a href=mailto:changyuanl@google.com>changyuanl@google.com</a></li><li>Chinmoy <a href=mailto:daschinmoyy21@gmail.com>daschinmoyy21@gmail.com</a></li><li>Damian Barabonkov <a href=mailto:dbctl@pm.me>dbctl@pm.me</a></li><li>Demi Marie Obenour <a href=mailto:demiobenour@gmail.com>demiobenour@gmail.com</a></li><li>Dylan Reid <a href=mailto:dgreid@dylanreid.com>dgreid@dylanreid.com</a></li><li>Dylan Reid <a href=mailto:dgreid@fb.com>dgreid@fb.com</a></li><li>Emir Beganovic <a href=mailto:beganovic.emir@gmail.com>beganovic.emir@gmail.com</a></li><li>JP Kobryn <a href=mailto:inwardvessel@gmail.com>inwardvessel@gmail.com</a></li><li>Jared White <a href=mailto:git@jaredwhite.dev>git@jaredwhite.dev</a></li><li>Julian Schindel <a href=mailto:julian.schindel@cyberus-technology.de>julian.schindel@cyberus-technology.de</a></li><li>Julian Schindel <a href=mailto:mail@arctic-alpaca.de>mail@arctic-alpaca.de</a></li><li>Keith Adler <a href=mailto:kadler@cloudflare.com>kadler@cloudflare.com</a></li><li>Kevin Hui <a href=mailto:kevinhui@meta.com>kevinhui@meta.com</a></li><li>Leander Kohler <a href=mailto:leander.kohler@cyberus-technology.de>leander.kohler@cyberus-technology.de</a></li><li>Max Makarov <a href=mailto:maxpain@linux.com>maxpain@linux.com</a></li><li>Muminul Islam <a href=mailto:muislam@microsoft.com>muislam@microsoft.com</a></li><li>Nguyen Dinh Phi <a href=mailto:phind.uet@gmail.com>phind.uet@gmail.com</a></li><li>Pascal Scholz <a href=mailto:pascal.scholz@cyberus-technology.de>pascal.scholz@cyberus-technology.de</a></li><li>Peter Oskolkov <a href=mailto:posk@google.com>posk@google.com</a></li><li>Philipp Schuster <a href=mailto:philipp.schuster@cyberus-technology.de>philipp.schuster@cyberus-technology.de</a></li><li>Rob Bradford <a href=mailto:rbradford@meta.com>rbradford@meta.com</a></li><li>Roberto Campesato <a href=mailto:render@metalabs.org>render@metalabs.org</a></li><li>Ruben Hakobyan <a href=mailto:hruben@meta.com>hruben@meta.com</a></li><li>Saravanan D <a href=mailto:saravanand@crusoe.ai>saravanand@crusoe.ai</a></li><li>Sebastian Eydam <a href=mailto:sebastian.eydam@cyberus-technology.de>sebastian.eydam@cyberus-technology.de</a></li><li>Sebastian Walz <a href=mailto:sebastian.walz@secunet.com>sebastian.walz@secunet.com</a></li><li>Shayon Mukherjee <a href=mailto:shayonj@gmail.com>shayonj@gmail.com</a></li><li>Souradeep <a href=mailto:schakrabarti@microsoft.com>schakrabarti@microsoft.com</a></li><li>Souradeep Chakrabarti <a href=mailto:schakrabarti@microsoft.com>schakrabarti@microsoft.com</a></li><li>Stepan Rabotkin <a href=mailto:epicstyt@gmail.com>epicstyt@gmail.com</a></li><li>Thomas Prescher <a href=mailto:thomas.prescher@cyberus-technology.de>thomas.prescher@cyberus-technology.de</a></li><li>Tobias Kässer <a href=mailto:t.kaesser@gmail.com>t.kaesser@gmail.com</a></li><li>Victor Vieux <a href=mailto:vieux@repl.it>vieux@repl.it</a></li><li>Vincent Thomas <a href=mailto:vincent@v-thomas.com>vincent@v-thomas.com</a></li><li>Wei Liu <a href=mailto:liuwe@microsoft.com>liuwe@microsoft.com</a></li><li>Zhiheng Tao <a href=mailto:junchuan.tzh@antgroup.com>junchuan.tzh@antgroup.com</a></li><li>dependabot[bot] &lt;49699333+dependabot[bot]@users.noreply.github.com></li><li>sohakpt <a href=mailto:sohakpt@outlook.com>sohakpt@outlook.com</a></li><li>wuxinyue <a href=mailto:wuxinyue.wxy@antgroup.com>wuxinyue.wxy@antgroup.com</a></li></ul><h3 id=download>Download <a href=#download class=anchor aria-hidden=true>#</a></h3><p>See the <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/releases/tag/v52.0>GitHub Release</a> for the release assets.</p></article></div></div></div></div></div></section><section class="section section-sm container-fluid"><div class="row justify-content-center text-center"><div class=col-lg-9></div></div></section><footer class="footer text-muted"><div class=container-xxl><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Copyright © 2021 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies. Rendered with <a href=https://gohugo.io/>Hugo</a>, and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://www.cloudhypervisor.org/js/bootstrap.min.cce6a176802954e99a4d0f67a9793ff6cbb2da0f463e9d8e211ebb39361791fb3da02b597371bf36367363f6b0956eb01378dcf51c8ceb6d455e4f2060afea14.js integrity="sha512-zOahdoApVOmaTQ9nqXk/9suy2g9GPp2OIR67OTYXkfs9oCtZc3G/NjZzY/awlW6wE3jc9RyM621FXk8gYK/qFA==" crossorigin=anonymous defer></script>
+isssues</a>; for broader community discussions please use our <a href=https://lists.cloudhypervisor.org/g/dev>mailing list</a></p></div><div class="col-md-12 col-lg-10 col-xl-8"><h2 class="h3 mt-3 text-center">Latest news from Cloud Hypervisor project:</h2><div class=card-list><div class=card><div class=card-body><article><div class=blog-header><h2><a href=https://www.cloudhypervisor.org/blog/cloud-hypervisor-v53.0-released/>Cloud Hypervisor v53.0 Released!</a></h2><p><small>Posted July 12, 2026 by <a class="stretched-link position-relative" href=https://www.cloudhypervisor.org/contributors/cloud-hypervisor-team/>Cloud Hypervisor Team</a>&nbsp;&dash;&nbsp;<strong>6&nbsp;min read</strong></small><p></div><p class=lead></p><p>This release has been tracked in <a href="https://github.com/orgs/cloud-hypervisor/projects/6/views/6?filterQuery=release%3A%22Release+53%22">v53.0 group</a> of our <a href=https://github.com/orgs/cloud-hypervisor/projects/6/>roadmap project</a>.</p><h3 id=snapshotrestore-and-live-migration-improvements>Snapshot/Restore and Live Migration Improvements <a href=#snapshotrestore-and-live-migration-improvements class=anchor aria-hidden=true>#</a></h3><ul><li>An offloaded snapshot/restore daemon has been introduced, allowing snapshot
+and restore to be carried out by an external process. The live migration
+protocol has been extended so page faults can be serviced from the source.
+This enables <em>postcopy</em> for remote live migration and <em>on-demand paging</em> for
+the offload daemon, both built on <code>userfaultfd</code>, bringing the offload daemon
+to parity with the internal snapshot/restore implementation (#8403, #8264,
+#8556).</li><li>Snapshot pages can now be prefaulted in the background after a
+<code>userfaultfd</code>-based restore, combining a fast restore-to-resume with fully
+faulted-in memory shortly afterwards. The number of prefault threads scales
+with the available parallelism (#8150, #8538, #8484).</li><li>Live migration data can now be encrypted using mutual TLS (#8053).</li><li>VFIO migration v2 is now supported for same-host snapshot and restore of
+migratable VFIO devices (for example ConnectX VFs bound to <code>mlx5_vfio_pci</code>)
+(#8303).</li><li>Migrated guests now issue post-migration network announcements so that
+connectivity on the new host is refreshed within milliseconds rather than
+taking up to 20 seconds to recover (#8263).</li><li>The <code>vm.send-migration</code> API endpoint now returns immediately rather than
+blocking for the duration of the migration (#8021).</li></ul><h3 id=nested-hyper-v-windows-guest-support>Nested Hyper-V (Windows Guest) Support <a href=#nested-hyper-v-windows-guest-support class=anchor aria-hidden=true>#</a></h3><p>Windows guests can now run nested Hyper-V as used by WSL2 on the KVM backend
+(#8481).</p><h3 id=virtio-rtc-device-support><code>virtio-rtc</code> Device Support <a href=#virtio-rtc-device-support class=anchor aria-hidden=true>#</a></h3><p>Support for <code>virtio-rtc</code> devices has been added (via <code>--rtc</code>), providing a
+Real Time Clock to the guest. This is primarily useful for, and only enabled by
+default on, MSHV guests that do not have access to <code>kvmclock</code> (#7795).</p><h3 id=guest-clock-updates-across-snapshotrestore-and-migration>Guest Clock Updates Across Snapshot/Restore and Migration <a href=#guest-clock-updates-across-snapshotrestore-and-migration class=anchor aria-hidden=true>#</a></h3><p>The guest clock is now advanced to account for the elapsed wall-clock time when
+a VM is resumed after a snapshot-restore or a live migration so the guest sees
+the correct time of day immediately rather than lagging behind by the downtime.
+On x86 the kvmclock realtime flag is preserved so that the kernel adjusts the
+clock automatically (#8256). On ARM64 the guest counter is advanced using the
+<code>KVM_REG_ARM_TIMER_CNT</code> interface (#8343). vCPU TSC offsets are also
+re-synchronized on restore (#8437).</p><h3 id=buffered-serial-output-for-late-connecting-clients>Buffered Serial Output for Late-Connecting Clients <a href=#buffered-serial-output-for-late-connecting-clients class=anchor aria-hidden=true>#</a></h3><p>In socket serial mode (<code>--serial socket=...</code>) the output produced before a
+client connects is now buffered so a console client that attaches after boot
+sees the earlier output (#8322).</p><h3 id=new-command-line-and-api-options>New Command-Line and API Options <a href=#new-command-line-and-api-options class=anchor aria-hidden=true>#</a></h3><ul><li>A <code>reserve=on|off</code> option has been added to <code>--memory</code> and
+<code>--memory-zone</code> (default <code>off</code>). When enabled, guest RAM is mapped
+without <code>MAP_NORESERVE</code> so an overcommitted configuration fails cleanly at VM
+creation with <code>ENOMEM</code> (#8350).</li><li>The SMBIOS/DMI fields exposed via <code>--platform</code> have been extended and scoped
+to specific SMBIOS structures, for workloads that consume this data for
+licensing, inventory, or host identification (#8259).</li><li>The VMM can now consume pre-opened VFIO <code>cdev</code> and <code>iommufd</code> file descriptors
+supplied by the caller, letting a privileged orchestrator open the device
+nodes once and hand the FDs to an unprivileged VMM at boot or at runtime.
+This is also a prerequisite for live migration of VMs using VFIO devices
+(#8287).</li><li>A &ldquo;glog style&rdquo; log format has been added, with a single-character level and
+local or UTC timestamps (#8265).</li><li>A new <code>--seccomp=errno</code> option has been added that will result in filtered
+syscalls to set <code>errno</code> to <code>EPERM</code>. This can be used when the killing of the
+process with <code>SIGSYS</code> is not desired (#8578).</li></ul><h3 id=deprecations>Deprecations <a href=#deprecations class=anchor aria-hidden=true>#</a></h3><ul><li>The legacy <code>--platform</code> SMBIOS keys <code>serial_number</code> and <code>uuid</code> are
+deprecated in favor of the new SMBIOS-structure-scoped keys. The
+legacy keys continue to be accepted, with a warning, and will be
+removed in a future release (#8259).</li><li>The generic <code>vhost-user</code> device&rsquo;s <code>virtio_id</code> command-line
+parameter is deprecated in favor of <code>device_type</code>, matching the API
+and configuration naming. <code>virtio_id</code> is retained as an alias that
+logs a warning and will be removed in a later release (#8564).</li></ul><h3 id=notable-bug-fixes>Notable Bug Fixes <a href=#notable-bug-fixes class=anchor aria-hidden=true>#</a></h3><ul><li>Revert <code>create memfd for private mappings</code>, which caused a serious memory
+consumption regression without hugepages or <code>shared=on</code> (#8246).</li><li>Advertise the mandatory Hyper-V partition privileges so Windows
+guests enable the reference TSC page instead of taking a VM exit on
+every clock read (#8380).</li><li>Correctly save and restore ARM64 SVE registers (#8268).</li><li>Set the guest physical address space size correctly on AMD (#8291).</li><li>Sparse align the initial PCI BAR placement to avoid a Windows rebalancing
+deadlock (#8205).</li><li>Various TPM fixes, including for Windows guests (#8305, #8312).</li><li>Preserve <code>WRITE_ZEROES</code> on QCOW2 images with backing files (#8245)
+and fix <code>WriteZeroes</code> sector arithmetic overflow (#8388).</li><li>Improve <code>O_DIRECT</code> handling so that <code>direct=on</code> is usable on hosts
+requiring 4K alignment, including opening fixed VHD images (#8335).</li><li>Resolve relative QCOW2 backing file paths correctly (#8196).</li><li>Drain block I/O before the device is paused (#8356) and retry
+locking when interrupted by <code>EINTR</code> (#8402).</li><li>Fix VHDX region-table overlap detection (#8483) and an incomplete
+bounds check in the VHDX synchronous I/O worker (#8529).</li><li>Fix a guest deadlock by signalling <code>DEVICE_NEEDS_RESET</code> and
+releasing the activation barrier when a virtio device fails to
+activate (#8295).</li><li>Handle short and misaligned MMIO/PIO accesses without panicking:
+validate the MMIO access size (#8506), return all-ones for
+unregistered MMIO/PIO reads (#8237), correct <code>fw_cfg</code> short and long
+reads (#8507), respect the PCI CFG capability length for BAR access
+(#8272, #8238), and reject incorrect MSI-X table and PBA reads (#8417).</li><li>Translate virtio-iommu buffers that span adjacent mappings (#8520),
+and add centralized virtio descriptor-range validation (#8232).</li><li>Handle a guest/host half-close on vsock connections (#8372).</li><li>Avoid a guest-triggerable VMM panic by replacing asserts on ACPI
+device accesses with checks (#8405).</li><li>Emit a complete ACPI <code>_S5_</code> sleep package, fixing an early-boot
+fault on OpenBSD guests (#8426).</li><li>Transfer post-snapshot guest memory changes during live migration to
+avoid corruption with <code>vhost-user</code> devices (#8361).</li><li>Improve configuration validation to return errors instead of
+panicking on malformed input (#8511), require the <code>ch-remote</code>
+snapshot/restore config arguments instead of panicking (#8331),
+reject resizing below the boot memory size (#8428), reject removal of
+an already-removed device (#8559), and fix generic <code>vhost-user</code>
+parsing (#8564).</li><li>Don&rsquo;t leak a file descriptor when ejecting a VFIO device (#8367),
+and fix a PCI device hotplug race by deferring device visibility
+(#8369).</li><li>Fix PCI segment ID validation (#8377) and make the PCI BDF
+configurable for the balloon and ivshmem devices (#8310).</li><li>Return HTTP 404 for API requests against a VM that has not been
+created (#8320), and omit unset optional fields from API responses so
+that strict client generators accept them (#8321).</li><li>Clean up a stale API socket under a lock before binding (#8325).</li><li>Cache the local timezone before installing seccomp filters (#8327).</li><li>Enhance the ACPI PPTT with cache topology information (#7893).</li><li>Correct several OpenAPI specification entries: the
+<code>iommu_address_width</code> field name (#8244), integer schema formats
+(#8278), <code>GenericVhostUserConfig</code> properties (#8543), a parameter
+name (#8544), and the <code>vmm.nmi</code> to <code>vm.nmi</code> endpoint (#8571).</li><li>Deduplicate <code>VmConfig::preserved_fds</code> (#8271).</li></ul><h3 id=contributors>Contributors <a href=#contributors class=anchor aria-hidden=true>#</a></h3><p>Many thanks to everyone who has contributed to our release:</p><ul><li>Aastha Rawat <a href=mailto:aastharawat@microsoft.com>aastharawat@microsoft.com</a></li><li>Adel-Ayoub <a href=mailto:adelayoub.maaziz@gmail.com>adelayoub.maaziz@gmail.com</a></li><li>Alexander Lvov <a href=mailto:alexander.lvov.git@gmail.com>alexander.lvov.git@gmail.com</a></li><li>Alyssa Ross <a href=mailto:hi@alyssa.is>hi@alyssa.is</a></li><li>Anatol Belski <a href=mailto:anbelski@linux.microsoft.com>anbelski@linux.microsoft.com</a></li><li>Andrei Vagin <a href=mailto:avagin@google.com>avagin@google.com</a></li><li>Anirudh Rayabharam <a href=mailto:anrayabh@microsoft.com>anrayabh@microsoft.com</a></li><li>Atish Patra <a href=mailto:atishp@meta.com>atishp@meta.com</a></li><li>Bo Chen <a href=mailto:bchen@crusoe.ai>bchen@crusoe.ai</a></li><li>Cameron Baird <a href=mailto:cameronbaird@microsoft.com>cameronbaird@microsoft.com</a></li><li>Chris Webb <a href=mailto:chris@arachsys.com>chris@arachsys.com</a></li><li>CMGS <a href=mailto:ilskdw@gmail.com>ilskdw@gmail.com</a></li><li>Damian Barabonkov <a href=mailto:dbctl@pm.me>dbctl@pm.me</a></li><li>Daniel Verkamp <a href=mailto:drv@meta.com>drv@meta.com</a></li><li>doge <a href=mailto:me@crackerben.com>me@crackerben.com</a></li><li>Dylan Reid <a href=mailto:dgreid@fb.com>dgreid@fb.com</a></li><li>Gauthier Jolly <a href=mailto:contact@gjolly.fr>contact@gjolly.fr</a></li><li>Henry Hrvoje Tonkovac <a href=mailto:htonkovac@gmail.com>htonkovac@gmail.com</a></li><li>Ian Klemm <a href=mailto:hi@ianklemm.de>hi@ianklemm.de</a></li><li>Julian Schindel <a href=mailto:julian.schindel@cyberus-technology.de>julian.schindel@cyberus-technology.de</a></li><li>Leander Kohler <a href=mailto:leander.kohler@cyberus-technology.de>leander.kohler@cyberus-technology.de</a></li><li>Max Makarov <a href=mailto:maxpain@linux.com>maxpain@linux.com</a></li><li>Meng Zhuo <a href=mailto:mengzhuo@iscas.ac.cn>mengzhuo@iscas.ac.cn</a></li><li>Muminul Islam <a href=mailto:muislam@microsoft.com>muislam@microsoft.com</a></li><li>Nikolas Kyx <a href=mailto:55556836+nyx191@users.noreply.github.com>55556836+nyx191@users.noreply.github.com</a></li><li>Oliver Anderson <a href=mailto:oliver.anderson@cyberus-technology.de>oliver.anderson@cyberus-technology.de</a></li><li>Pascal Scholz <a href=mailto:pascal.scholz@cyberus-technology.de>pascal.scholz@cyberus-technology.de</a></li><li>Philipp Schuster <a href=mailto:philipp.schuster@cyberus-technology.de>philipp.schuster@cyberus-technology.de</a></li><li>Rob Bradford <a href=mailto:rbradford@meta.com>rbradford@meta.com</a></li><li>Roman <a href=mailto:roman@vanesyan.com>roman@vanesyan.com</a></li><li>Rowen-Ye <a href=mailto:rowenye1@gmail.com>rowenye1@gmail.com</a></li><li>Ruben Hakobyan <a href=mailto:hruben@meta.com>hruben@meta.com</a></li><li>Saravanan D <a href=mailto:saravanand@crusoe.ai>saravanand@crusoe.ai</a></li><li>Sayed Kaif <a href=mailto:metsw24@gmail.com>metsw24@gmail.com</a></li><li>Sebastian Eydam <a href=mailto:sebastian.eydam@cyberus-technology.de>sebastian.eydam@cyberus-technology.de</a></li><li>Sebastien Boeuf <a href=mailto:sboeuf@meta.com>sboeuf@meta.com</a></li><li>tchaton <a href=mailto:thomas.chaton.ai@gmail.com>thomas.chaton.ai@gmail.com</a></li><li>Thomas Prescher <a href=mailto:thomas.prescher@cyberus-technology.de>thomas.prescher@cyberus-technology.de</a></li><li>tonic <a href=mailto:tonicbupt@gmail.com>tonicbupt@gmail.com</a></li><li>Tushar Khatri <a href=mailto:hello@tusharkhatri.in>hello@tusharkhatri.in</a></li><li>wangyf0611 <a href=mailto:wangyufeng@iscas.ac.cn>wangyufeng@iscas.ac.cn</a></li><li>Wei Liu <a href=mailto:liuwe@microsoft.com>liuwe@microsoft.com</a></li><li>wuxinyue <a href=mailto:wuxinyue.wxy@antgroup.com>wuxinyue.wxy@antgroup.com</a></li><li>yanjianqing <a href=mailto:yanjianqing@kylinos.cn>yanjianqing@kylinos.cn</a></li></ul><h3 id=download>Download <a href=#download class=anchor aria-hidden=true>#</a></h3><p>See the <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/releases/tag/v53.0>GitHub Release</a> for the release assets.</p></article></div></div></div></div></div></section><section class="section section-sm container-fluid"><div class="row justify-content-center text-center"><div class=col-lg-9></div></div></section><footer class="footer text-muted"><div class=container-xxl><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Copyright © 2021 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies. Rendered with <a href=https://gohugo.io/>Hugo</a>, and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://www.cloudhypervisor.org/js/bootstrap.min.cce6a176802954e99a4d0f67a9793ff6cbb2da0f463e9d8e211ebb39361791fb3da02b597371bf36367363f6b0956eb01378dcf51c8ceb6d455e4f2060afea14.js integrity="sha512-zOahdoApVOmaTQ9nqXk/9suy2g9GPp2OIR67OTYXkfs9oCtZc3G/NjZzY/awlW6wE3jc9RyM621FXk8gYK/qFA==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/js/highlight.min.a4326e9fb7fe7186d35cef8cf9efadc53041724dc47c3d9786f4e8794d0e12eb623ecb3ca27f8912915a9a7195f9ababe5bc1ff3b23e3aabebeb52ff7a3fac0f.js integrity="sha512-pDJun7f+cYbTXO+M+e+txTBBck3EfD2XhvToeU0OEutiPss8on+JEpFamnGV+aur5bwf87I+Oqvr61L/ej+sDw==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/main.min.cfa136509b4690212e37c116f5afc6938cf1c5d28348366a61feee1302c067a6e6892a265334fa686ec8cb6c64b2b94d8e269c5fabb6bd568c604ac0a1dc1c9b.js integrity="sha512-z6E2UJtGkCEuN8EW9a/Gk4zxxdKDSDZqYf7uEwLAZ6bmiSomUzT6aG7Iy2xksrlNjiacX6u2vVaMYErAodwcmw==" crossorigin=anonymous defer></script></body></html>
