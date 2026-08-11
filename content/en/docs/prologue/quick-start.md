@@ -92,7 +92,7 @@ interface will be enabled as per `network-config` details.
 $ sudo setcap cap_net_admin+ep ./cloud-hypervisor
 $ ./create-cloud-init.sh
 $ ./cloud-hypervisor \
-	--kernel ./hypervisor-fw \
+	--firmware ./hypervisor-fw \
 	--disk path=focal-server-cloudimg-amd64.raw path=/tmp/ubuntu-cloudinit.img \
 	--cpus boot=4 \
 	--memory size=1024M \
@@ -105,7 +105,7 @@ GRUB) is required then it necessary to switch to the serial console instead of
 
 ```shell
 $ ./cloud-hypervisor \
-	--kernel ./hypervisor-fw \
+	--firmware ./hypervisor-fw \
 	--disk path=focal-server-cloudimg-amd64.raw path=/tmp/ubuntu-cloudinit.img \
 	--cpus boot=4 \
 	--memory size=1024M \
