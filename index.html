@@ -4,187 +4,85 @@
 GitHub</a></p><p>For full details of our governance model please see our <a href=https://github.com/cloud-hypervisor/community>community repository on GitHub</a> and our
 <a href=https://github.com/cloud-hypervisor/community/blob/master/technical-charter.pdf>founding
 charter</a>.</p><p>For bug reports please use <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/issues>GitHub
-isssues</a>; for broader community discussions please use our <a href=https://lists.cloudhypervisor.org/g/dev>mailing list</a></p></div><div class="col-md-12 col-lg-10 col-xl-8"><h2 class="h3 mt-3 text-center">Latest news from Cloud Hypervisor project:</h2><div class=card-list><div class=card><div class=card-body><article><div class=blog-header><h2><a href=https://www.cloudhypervisor.org/blog/cloud-hypervisor-v54.0-released/>Cloud Hypervisor v54.0 Released!</a></h2><p><small>Posted October 14, 2026 by <a class="stretched-link position-relative" href=https://www.cloudhypervisor.org/contributors/cloud-hypervisor-team/>Cloud Hypervisor Team</a>&nbsp;&dash;&nbsp;<strong>14&nbsp;min read</strong></small><p></div><p class=lead></p><p>This release has been tracked in <a href="https://github.com/orgs/cloud-hypervisor/projects/6/views/6?filterQuery=release%3A%22Release+54%22">v54.0 group</a> of our <a href=https://github.com/orgs/cloud-hypervisor/projects/6/>roadmap project</a>.</p><h3 id=live-migration-version-compatibility>Live Migration Version Compatibility <a href=#live-migration-version-compatibility class=anchor aria-hidden=true>#</a></h3><p>Starting with this release, Cloud Hypervisor guarantees that live migrations
-from the two previous releases are accepted (&ldquo;n-2&rdquo;). For example, v54.0 accepts
-migrations from v52.0 and v53.0. Upgrades spanning more releases might work,
-but incremental upgrades, for example from v54.0 to v56.0 to v58.0, are
-strongly recommended. New functionality is added in a way that keeps VMs from
-older releases working, so only newly created VMs can use it. The migration
-protocol version is now an internal detail (#8751, #8787).</p><p><strong>Migrating back to an older release is not officially supported.</strong> It might
-work, depending on the VMM and VM configuration, but there is no guarantee.</p><p>This is another important step on our live migration roadmap. This effort is tracked
-in <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/issues/7111>#7111</a>.</p><h3 id=vfio-device-live-migration>VFIO Device Live Migration <a href=#vfio-device-live-migration class=anchor aria-hidden=true>#</a></h3><p>VMs with migratable VFIO devices, for example ConnectX VFs bound to
-<code>mlx5_vfio_pci</code>, can now be live migrated. The device state is transferred
-together with the guest, and memory written by the device is tracked during the
-migration. This requires <code>--platform iommufd=on</code> and a host driver with
-migration support. On the destination, pre-opened VFIO device and <code>iommufd</code>
-file descriptors can be passed through the new <code>vfio_fds</code> and <code>iommufd_fd</code>
-options of <code>receive-migration</code> and <code>restore</code>. VFIO devices behind a virtual
-IOMMU cannot be migrated yet (#8528).</p><h3 id=live-migration-cancellation>Live Migration Cancellation <a href=#live-migration-cancellation class=anchor aria-hidden=true>#</a></h3><p>An ongoing live migration can now be cancelled with the new
-<code>vm.cancel-migration</code> API endpoint or the <code>ch-remote cancel-migration</code> command.
-This lets management software abort a migration that does not converge, whose
-destination is no longer the best choice, or that puts too much load on the
-network. The VM keeps running on the source and a <code>vm.migration-cancelled</code>
-event is emitted. After a failed or cancelled migration, Cloud Hypervisor
-attempts to restore the source VM to its pre-migration state if it has not
-already moved to the destination (#8455, #8935).</p><h3 id=event-monitor-improvements>Event Monitor Improvements <a href=#event-monitor-improvements class=anchor aria-hidden=true>#</a></h3><p>The event monitor (<code>--event-monitor</code>) is now properly documented, including its
-format and all events (#8888). We aim to keep the events stable, so that
-management software can rely on them. A new <code>vmm.started</code> event signals that
-the VMM is ready to serve API requests (#8888). The live migration events have
-been refined: the new <code>vm.migration-starting</code> and
-<code>vm.migration-receive-starting</code> events are emitted when a migration attempt
-begins, <code>vm.migration-started</code> now means that the handshake succeeded, and
-<code>vm.migration-receive-failed</code> is emitted for every failure (#8850).</p><h3 id=emulated-arm-smmuv3-experimental>Emulated ARM SMMUv3 (Experimental) <a href=#emulated-arm-smmuv3-experimental class=anchor aria-hidden=true>#</a></h3><p>On AArch64, passthrough devices can now be placed behind an emulated ARM SMMUv3
-with <code>--device ...,iommu=smmuv3</code>. Unlike with virtio-iommu, the guest uses its
-stock <code>arm-smmu-v3</code> driver, and the translation is offloaded to the physical
-SMMUv3 through <code>iommufd</code>. This makes it possible to assign devices that use the
-IOMMU themselves, such as NVIDIA Grace-Blackwell GPUs. The feature requires
-KVM, <code>--platform iommufd=on</code> and a host kernel with nested translation support
-for ARM SMMUv3. Hotplug, snapshot/restore and live migration are not supported,
-and <code>iommu=smmuv3</code> cannot be mixed with <code>iommu=virtio</code> (#8955, #8805, #8919,
-#8790).</p><h3 id=flat-vmdk-disk-image-support>Flat VMDK Disk Image Support <a href=#flat-vmdk-disk-image-support class=anchor aria-hidden=true>#</a></h3><p>Flat VMDK disk images (<code>monolithicFlat</code> and <code>twoGbMaxExtentFlat</code>) are now
-supported through <code>--disk image_type=vmdk</code>. A VMDK image consists of a
-descriptor file that references one or more extent files holding the data.
-Because the descriptor refers to other files by path, VMDK images are only
-opened when <code>backing_files=on</code> marks the image as trusted, and relative extent
-paths are confined to the descriptor&rsquo;s directory. Only synchronous I/O is
-supported, and with Landlock the extent paths must be allowed through
-<code>--landlock-rules</code> (#8599, #8714, #8886, #8885, #8691).</p><h3 id=balloon-statistics>Balloon Statistics <a href=#balloon-statistics class=anchor aria-hidden=true>#</a></h3><p>Statistics reported by the guest&rsquo;s <code>virtio-balloon</code> driver can now be queried
-through the new <code>vm.balloon-stats</code> API endpoint, the <code>ch-remote balloon-stats</code>
-command and the D-Bus API. They give management software insight into the
-guest&rsquo;s memory usage, for example to size the balloon. The guest driver must
-support balloon statistics for this to work (#8603).</p><h3 id=virtio-console-over-a-unix-socket><code>virtio-console</code> Over a Unix Socket <a href=#virtio-console-over-a-unix-socket class=anchor aria-hidden=true>#</a></h3><p>The <code>virtio-console</code> device can now be exposed over a Unix socket with
-<code>--console socket=&lt;path></code>. It works the same way as <code>--serial socket=&lt;path></code>,
-and one client can be connected at a time. Configurations that pass a socket
-path without selecting socket mode, or the other way round, are now rejected
-for both <code>--serial</code> and <code>--console</code> (#8687).</p><h3 id=aarch64-boot-improvements>AArch64 Boot Improvements <a href=#aarch64-boot-improvements class=anchor aria-hidden=true>#</a></h3><p>AArch64 now supports firmware-aided direct kernel boot. When both <code>--firmware</code>
-and <code>--kernel</code> are given together with <code>--fw-cfg-config</code>, the firmware receives
-the kernel, command line and initramfs through the <code>fw_cfg</code> interface and boots
-the kernel. This requires a build with the <code>fw_cfg</code> feature (#8910). Direct
-kernel boot can also use ACPI using EFI tables supplied by Cloud Hypervisor
-when <code>acpi=on</code> is added to the kernel command line. This enables features such
-as PCI hotplug without a firmware, and a new ACPI Time and Alarm Device
-provides the RTC to such guests (requires Linux 7.1 or newer with
-<code>CONFIG_ACPI_TAD</code>) (#9013). Finally, AArch64 guests now receive SMBIOS tables
-including the <code>--platform</code> values, which requires an updated EDK2 <code>CloudHv</code>
-firmware (#8786).</p><h3 id=faster-memory-prefault>Faster Memory Prefault <a href=#faster-memory-prefault class=anchor aria-hidden=true>#</a></h3><p>Prefaulting guest memory (<code>prefault=on</code>) is now considerably faster on large
-hosts. Memory zones are now prefaulted in parallel on their host NUMA nodes,
-which reduced the prefault time of a 3 TiB guest on a two-socket host from 51.8
-s to 7.4 s. This applies to both VM boot and snapshot restore. In addition,
-prefaulted memory is now backed by transparent huge pages when the host THP
-policy is <code>madvise</code> (#8785, #8962, #8915).</p><h3 id=vm-generation-id-device>VM Generation ID Device <a href=#vm-generation-id-device class=anchor aria-hidden=true>#</a></h3><p>On x86_64 and AArch64, VMs now have a VM Generation ID device whose value
-changes on every restore and incoming live migration. Before, all VMs restored
-from the same snapshot started with the same random number generator state and
-produced the same <code>/dev/urandom</code> output until something reseeded it. Guest
-kernels built with <code>CONFIG_VMGENID</code> now reseed after a restore. The device is
-always present and needs no configuration. With direct kernel boot on AArch64,
-the guest needs <code>acpi=on</code> on the kernel command line. Applications that seeded
-their own random number generator keep that state and have to draw fresh
-randomness themselves after a restore (#8907).</p><h3 id=snapshotrestore-and-live-migration-improvements>Snapshot/Restore and Live Migration Improvements <a href=#snapshotrestore-and-live-migration-improvements class=anchor aria-hidden=true>#</a></h3><ul><li>Saving and restoring vCPU state is now up to 5-9 times faster for VMs with
-many vCPUs, which shortens snapshot, restore and live migration downtime
-(#8961).</li><li>Live migration downtime and total migration time have been reduced further,
-in particular for VMs with QCOW2 disks and for VMs with shared file-backed
-memory (#8898, #8943, #8982, #8589).</li><li>Memory zones can be remapped to different host NUMA nodes on
-<code>receive-migration</code> and <code>restore</code> through the new <code>zone_updates</code> option
-(#8370).</li><li>A new <code>memory_restore_mode=copyonwrite</code> maps the snapshot memory file
-copy-on-write, so VMs restored from the same snapshot share the page cache
-(#8581).</li><li>A new <code>preserve_source=on</code> option of <code>send-migration</code> leaves the source VM
-paused instead of shutting it down after an offload snapshot (#8623).</li><li>Serialized VM state is about 29% smaller for a VM with 16 disks. The
-previous PCI configuration state representation is still accepted when
-restoring snapshots (#8904).</li></ul><h3 id=device-and-platform-improvements>Device and Platform Improvements <a href=#device-and-platform-improvements class=anchor aria-hidden=true>#</a></h3><ul><li>SEV-SNP VMs with VFIO devices now use roughly half as much host memory.
-Memory and CPU hotplug, huge pages and a virtual IOMMU are now rejected for
-SEV-SNP guests (#8501).</li><li>On x86_64, the AMD HyperTransport range (1012 GiB to 1 TiB) is now reserved
-in the guest memory layout, so VFIO DMA mappings no longer fail for guests
-with more than 1011 GiB of memory (#8902).</li><li>A PCI host bridge is now only created on PCI segment 0, which allows
-endpoints on other segments to be assigned PCI device 0 as needed by NVIDIA
-Grace GPUs (#8747).</li><li><code>vhost-user-net</code> devices now use the MAC address and MTU from the backend&rsquo;s
-configuration space when the backend provides them, and the reference
-backend gained a <code>mac=</code> option (#8684).</li><li>VMs with passthrough GPUs start faster, by about 400 ms per GPU (#8975).</li></ul><h3 id=new-command-line-and-api-options>New Command-Line and API Options <a href=#new-command-line-and-api-options class=anchor aria-hidden=true>#</a></h3><ul><li>A <code>guest_block_size</code> option has been added to <code>--disk</code> to override the
-logical block size advertised to the guest, for example to expose a 512-byte
-image stored on 4K-native storage (#8595).</li><li><code>reserve</code> now defaults to <code>on</code> for <code>--memory</code> and <code>--memory-zone</code> when
-<code>hugepages=on</code> is set, so a shortage of huge pages fails at VM creation
-instead of causing a <code>SIGBUS</code> at runtime. An explicit <code>reserve=off</code> is
-still honoured (#8770).</li></ul><h3 id=changed-default-behavior>Changed Default Behavior <a href=#changed-default-behavior class=anchor aria-hidden=true>#</a></h3><ul><li>Nested virtualization is now disabled by default on all architectures. It
-widens the attack surface of the host kernel, and most users do not need it.
-Guests that use hardware virtualization themselves now need <code>--cpus nested=on</code>
-(#9045).</li><li>The <code>virtio-net</code> offloads (<code>offload_csum</code>, <code>offload_tso</code> and <code>offload_ufo</code>)
-are now disabled by default, because they make the host do more work for
-the guest&rsquo;s packets. They can be enabled again with
-<code>--net ...,offload_csum=on,offload_tso=on,offload_ufo=on</code> (#9041).</li><li>Both new defaults apply to the command line and the API. VMs restored from
-a snapshot or received through live migration keep their configured
-values.</li></ul><h3 id=deprecations-and-removals>Deprecations and Removals <a href=#deprecations-and-removals class=anchor aria-hidden=true>#</a></h3><ul><li>Disk image type autodetection, deprecated since v52.0, has been removed.
-<code>image_type</code> must now be specified for every disk that is not a
-<code>vhost-user</code> disk, and it must match the image format (#8794, #8798).</li><li>The <code>memory_mode</code> option of <code>receive-migration</code> has been removed. The
-sender now announces the memory mode through the migration protocol
-(#8819).</li><li>The <code>local=on</code> option of <code>send-migration</code> is deprecated in favor of
-<code>memory_mode=memfds</code> (#8820).</li><li>The per-device <code>iommu=on</code> option is deprecated in favor of <code>iommu=virtio</code>.
-In the API, the <code>iommu</code> fields change from a boolean to an
-<code>"Off"</code>, <code>"Virtio"</code> or <code>"Smmuv3"</code> value. Booleans are still accepted but
-deprecated, as is the top-level <code>iommu</code> field of <code>VmConfig</code> (#8955).</li><li>Unaligned requests to raw and fixed VHD disks with <code>direct=on</code> are no
-longer emulated with read-modify-write cycles, which caused bugs and
-security issues. Such requests now fail with an I/O error. Linux and EDK2
-guests are not affected, because their requests are multiples of the
-advertised logical block size, which now also accounts for the direct I/O
-alignment of host block devices. <code>guest_block_size</code> values below the
-backing block size are now also rejected for read-only raw and fixed VHD
-disks (#9064).</li></ul><h3 id=security-hardening>Security Hardening <a href=#security-hardening class=anchor aria-hidden=true>#</a></h3><ul><li>A security policy and a threat model describing trusted and untrusted
-entities have been added (#8384).</li><li>A malicious <code>vhost-user</code> backend can no longer crash the VMM by resizing the
-guest memory files (#8841).</li><li>Validate <code>vfio-user</code> sparse mmap areas against the region size, and enforce
-domain ownership on virtio-iommu detach (#8840).</li><li>Validate that <code>KVM_HC_MAP_GPA_RANGE</code> hypercalls from SEV-SNP guests stay
-within guest memory (#8992).</li><li>Fix guest-triggerable VMM panics in TPM register reads (#8816) and in VFIO
-DMA ranges spanning sparse mmap areas (#8734).</li><li>Reads from unbacked PIO/MMIO addresses now return zeros instead of stale data
-(#8817), and <code>fw_cfg</code> DMA requests are decoded correctly and no longer allow
-a guest-controlled out-of-bounds offset (#8994).</li><li>Harden QCOW2, VHD, VHDX and VMDK image parsing against malformed images
-(#8679, #8799).</li><li>Release <code>vsock</code> local ports only to their owner (#8612).</li><li>Bump <code>rustls</code> to fix RUSTSEC-2026-0285, which affects TLS-encrypted live
-migration (#8883).</li><li>The main thread now runs under its own seccomp filter once it has started
-the worker threads. Before, it ran without a filter (#9062).</li><li>A warning is now logged when TCP live migration runs without TLS
-(<code>tls_dir</code>). Plain TCP migration is unencrypted and unauthenticated, so
-anyone who can reach the destination can send it a VM. The documentation
-now uses TLS in all TCP migration examples (#9066).</li></ul><h3 id=notable-bug-fixes>Notable Bug Fixes <a href=#notable-bug-fixes class=anchor aria-hidden=true>#</a></h3><ul><li>Fix several QCOW2 data integrity bugs: data loss from a stale punch-hole
-(#8624), double allocations after a failed L2 relocation or a failed write
-(#8637, #8748), and L2 table refcount ordering after a failed write (#8721).</li><li>Fix unbounded QCOW2 image growth and space leaks (#8597, #8951), and use the
-whole refcount table the header declares (#8952).</li><li>Flush cached QCOW2 metadata on device pause so snapshots and shared-disk
-migrations do not miss completed writes (#8607). Only clear the QCOW2 dirty
-bit when the last user of the image is destroyed (#8647), and open QCOW2
-backing files with <code>O_DIRECT</code> when <code>direct=on</code> (#8673).</li><li>Fix VHDX sector size handling and reject images with 4K logical sectors
-(#8565), and fsync the image on guest flush (#8719).</li><li>Fall back to <code>write</code> when <code>fallocate</code> returns <code>EOPNOTSUPP</code>, for example on
-tmpfs (#8604).</li><li>Make a disk resize by a <code>vhost-user-blk</code> backend visible to the guest
-(#8824).</li><li>Correctly snapshot the AArch64 GIC redistributor and ICC state of every
-vCPU (#8638), restore nested virtualization state in the right order
-(#8996), and save and restore the guest shadow stack pointer (#8924).</li><li>Preserve queue indices across device resume (#8626), and fix a panic when
-restoring a VM with an unused virtio queue (#8702).</li><li>Fix on-demand restore with THP (#8694) and of fully file-backed VMs (#8849),
-and poison guest pages that a failed on-demand restore never served (#8928).</li><li>Fix restoring a VM with TAP networking without <code>CAP_NET_ADMIN</code> (#8605).</li><li>Fix short reads and writes across the codebase, which could truncate
-snapshot files or hang a restore (#8897).</li><li>Fix silent data corruption after a live migration: disk reads and received
-network frames that were written into guest memory during pre-copy could
-arrive with stale content on the destination (#9015).</li><li>Fix hangs of TCP live migration on worker failure (#8795), detect dead
-connections (#8660), and clean up receiver threads after a failed migration
-(#8656).</li><li>Don&rsquo;t resume the source VM after a failed postcopy migration when the guest
-already runs on the destination (#8890), and reject postcopy and on-demand
-restore for VMs with VFIO, vDPA, <code>vfio-user</code> or <code>vhost-user</code> devices
-(#9020).</li><li>Allow <code>vhost-user</code> devices to be migrated again after a migration (#8920).</li><li>Add missing CPUID compatibility checks for live migration and restore
-(leaf 0x7 sub-leaves, AMX and XSAVE state components). This may reject
-migrations to hosts that previously appeared to work (#8659, #8726, #8854).</li><li>Reinstate the gap between boot RAM and the hotplug memory region (#8780).</li><li>Exclude the COM1 and <code>fw_cfg</code> ports from the PCI I/O window, fixing Windows
-guests that did not start their virtio devices (#8980), and accept balloon
-requests with more than 256 pages, fixing the balloon with Windows guests
-(#9007).</li><li>Set the virtio PCI ISR configuration bit on configuration changes (#9011).</li><li>Fix the MSI-X pending bit array for vectors 31 to 63 of every 64-vector
-block, where setting or clearing a pending bit changed the wrong bits
-(#9058).</li><li>Only attach the negotiated <code>virtio-net</code> queue pairs, avoiding dropped frames
-(#8772), and drop TX frames instead of exiting the VM when the TAP device
-returns <code>EIO</code> (#8723).</li><li>Don&rsquo;t reply to <code>vsock</code> RST packets with an RST (#8692).</li><li>Recognize masked PCI BAR size probes, fixing OpenBSD boot (#8598), and fix
-16-bit writes to the PCI configuration address port (#8818).</li><li>Fix the guest cache topology for multi-package guests on x86_64 (#8731) and
-AArch64 (#8617).</li><li>Set the PMU interrupt in the AArch64 ACPI MADT (#8861), fix the ACPI SRAT
-Generic Initiator handle for PCI devices (#8766), and propagate clean
-shutdowns on AArch64 (#8710).</li><li>Handle <code>SystemEvent</code> exits on riscv64 (#8941).</li><li>Fix SEV-ES/SEV-SNP boot on newer host kernels (#8884).</li><li>Reclaim balloon memory with private file-backed memory zones (#8909).</li><li>Improve <code>vhost-user</code> reconnection by retrying the complete handshake,
-replaying in-order queues and aborting the retry on device teardown (#8613,
-#8592, #8759, #8463).</li><li>Make device removal retryable (#8739), reject the removal of devices
-attached to the virtio-iommu (#8650), and only eject the vCPU the guest is
-expected to eject (#8611).</li><li>Fix CPU affinity with 128 or more vCPUs on musl (#8972), and reject CPU
-affinity values beyond <code>CPU_SETSIZE</code> instead of panicking (#8843).</li><li>Raise the HTTP API request body limit from 50 KiB to 4 MiB (#8752).</li><li>Allow several missing syscalls in the seccomp filters that killed the VMM
-with <code>SIGSYS</code> (#8681, #8682, #8779, #8808, #8814, #8832, #8954, #8957).</li><li>Return correct HTTP status codes: 400 or 409 for invalid configurations
-(#8665, #8946), 404 for unknown devices or disks (#8640), and 409 for
-requests conflicting with the VM state (#8851).</li><li>Fix the OpenAPI specification for <code>generic_vhost_user</code> (#8674) and the
-<code>BreakPoint</code> VM state (#8675), and omit <code>virtio-block</code> latency counters
-before the first request (#8878).</li><li>Clean up a stale serial socket under a lock before binding (#8733), and
-reuse the serial socket listener across reboot (#8823).</li><li>Update the MSHV crates, fixing boot on older Microsoft Hypervisor versions
-(#8809).</li><li>Use host page size for dirty ranges (#9040).</li></ul><h3 id=contributors>Contributors <a href=#contributors class=anchor aria-hidden=true>#</a></h3><p>Many thanks to everyone who has contributed to our release:</p><ul><li>aiqubits <a href=mailto:aiqubits@hotmail.com>aiqubits@hotmail.com</a></li><li>Alexander Lvov <a href=mailto:alexander.lvov.git@gmail.com>alexander.lvov.git@gmail.com</a></li><li>Alyssa Ross <a href=mailto:hi@alyssa.is>hi@alyssa.is</a></li><li>Anatol Belski <a href=mailto:anbelski@linux.microsoft.com>anbelski@linux.microsoft.com</a></li><li>Andrew Onyshchuk <a href=mailto:oandrew@meta.com>oandrew@meta.com</a></li><li>Atish Patra <a href=mailto:atishp@meta.com>atishp@meta.com</a></li><li>Bo Chen <a href=mailto:bchen@crusoe.ai>bchen@crusoe.ai</a></li><li>Chinmoy <a href=mailto:daschinmoyy21@gmail.com>daschinmoyy21@gmail.com</a></li><li>CMGS <a href=mailto:ilskdw@gmail.com>ilskdw@gmail.com</a></li><li>Demi Marie Obenour <a href=mailto:demiobenour@gmail.com>demiobenour@gmail.com</a></li><li>doge <a href=mailto:me@crackerben.com>me@crackerben.com</a></li><li>Evan Almloff <a href=mailto:evanalmloff@gmail.com>evanalmloff@gmail.com</a></li><li>Gauravpawar101 <a href=mailto:Gauravpawar2522@gmail.com>Gauravpawar2522@gmail.com</a></li><li>Goran Draganić <a href=mailto:goran@daytona.io>goran@daytona.io</a></li><li>Isaku Yamahata <a href=mailto:iyamahata@crusoe.ai>iyamahata@crusoe.ai</a></li><li>Jan Vokas <a href=mailto:jan.vokas@zerops.io>jan.vokas@zerops.io</a></li><li>Julian Schindel <a href=mailto:julian.schindel@cyberus-technology.de>julian.schindel@cyberus-technology.de</a></li><li>Leander Kohler <a href=mailto:leander.kohler@cyberus-technology.de>leander.kohler@cyberus-technology.de</a></li><li>leo03164 <a href=mailto:leo03164@gmail.com>leo03164@gmail.com</a></li><li>Leo Li <a href=mailto:cheerleaderleo@outlook.com>cheerleaderleo@outlook.com</a></li><li>Lily Goscha <a href=mailto:lilygoscha@gmail.com>lilygoscha@gmail.com</a></li><li>Max Makarov <a href=mailto:maxpain@linux.com>maxpain@linux.com</a></li><li>Muminul Islam <a href=mailto:muislam@microsoft.com>muislam@microsoft.com</a></li><li>Oliver Anderson <a href=mailto:oliver.anderson@cyberus-technology.de>oliver.anderson@cyberus-technology.de</a></li><li>Pascal Scholz <a href=mailto:pascal.scholz@cyberus-technology.de>pascal.scholz@cyberus-technology.de</a></li><li>Peter Delevoryas <a href=mailto:pdel@meta.com>pdel@meta.com</a></li><li>Philipp Schuster <a href=mailto:philipp.schuster@cyberus-technology.de>philipp.schuster@cyberus-technology.de</a></li><li>Rob Bradford <a href=mailto:rbradford@meta.com>rbradford@meta.com</a></li><li>Rogelio Ruiz <a href=mailto:rruiz@techxagon.io>rruiz@techxagon.io</a></li><li>Ruben Hakobyan <a href=mailto:hruben@meta.com>hruben@meta.com</a></li><li>Saravanan D <a href=mailto:saravanand@crusoe.ai>saravanand@crusoe.ai</a></li><li>Sebastien Boeuf <a href=mailto:sboeuf@meta.com>sboeuf@meta.com</a></li><li>Shatrughan Rai <a href=mailto:polyglot.dev@outlook.com>polyglot.dev@outlook.com</a></li><li>Simon Lucido <a href=mailto:simonlucido@meta.com>simonlucido@meta.com</a></li><li>Stepan Rabotkin <a href=mailto:epicstyt@gmail.com>epicstyt@gmail.com</a></li><li>Sumedh Alok Sharma <a href=mailto:sumsharma@microsoft.com>sumsharma@microsoft.com</a></li><li>Thomas Prescher <a href=mailto:thomas.prescher@cyberus-technology.de>thomas.prescher@cyberus-technology.de</a></li><li>tonic <a href=mailto:tonicbupt@gmail.com>tonicbupt@gmail.com</a></li><li>Tynan Daly <a href=mailto:tynan.s.daly@gmail.com>tynan.s.daly@gmail.com</a></li><li>Umang Pokhriyal <a href=mailto:umangpokhriyall@gmail.com>umangpokhriyall@gmail.com</a></li><li>vans163 <a href=mailto:vans554@gmail.com>vans554@gmail.com</a></li><li>Victor Vieux <a href=mailto:vieux@repl.it>vieux@repl.it</a></li><li>Wei Liu <a href=mailto:liuwe@microsoft.com>liuwe@microsoft.com</a></li><li>windsornguyen <a href=mailto:win@dedaluslabs.ai>win@dedaluslabs.ai</a></li><li>Yilei Zheng <a href=mailto:trilith.zheng@gmail.com>trilith.zheng@gmail.com</a></li><li>Yi Wang <a href=mailto:foxywang@tencent.com>foxywang@tencent.com</a></li><li>ZenAlexa <a href=mailto:zimingwang945@gmail.com>zimingwang945@gmail.com</a></li></ul><h3 id=download>Download <a href=#download class=anchor aria-hidden=true>#</a></h3><p>See the <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/releases/tag/v54.0>GitHub Release</a> for the release assets.</p></article></div></div></div></div></div></section><section class="section section-sm container-fluid"><div class="row justify-content-center text-center"><div class=col-lg-9></div></div></section><footer class="footer text-muted"><div class=container-xxl><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Copyright © 2026 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies. Rendered with <a href=https://gohugo.io/>Hugo</a>, and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://www.cloudhypervisor.org/js/bootstrap.min.cce6a176802954e99a4d0f67a9793ff6cbb2da0f463e9d8e211ebb39361791fb3da02b597371bf36367363f6b0956eb01378dcf51c8ceb6d455e4f2060afea14.js integrity="sha512-zOahdoApVOmaTQ9nqXk/9suy2g9GPp2OIR67OTYXkfs9oCtZc3G/NjZzY/awlW6wE3jc9RyM621FXk8gYK/qFA==" crossorigin=anonymous defer></script>
+isssues</a>; for broader community discussions please use our <a href=https://lists.cloudhypervisor.org/g/dev>mailing list</a></p></div><div class="col-md-12 col-lg-10 col-xl-8"><h2 class="h3 mt-3 text-center">Latest news from Cloud Hypervisor project:</h2><div class=card-list><div class=card><div class=card-body><article><div class=blog-header><h2><a href=https://www.cloudhypervisor.org/blog/cloud-hypervisor-v55.0-released/>Cloud Hypervisor v55.0 Released!</a></h2><p><small>Posted November 19, 2026 by <a class="stretched-link position-relative" href=https://www.cloudhypervisor.org/contributors/cloud-hypervisor-team/>Cloud Hypervisor Team</a>&nbsp;&dash;&nbsp;<strong>7&nbsp;min read</strong></small><p></div><p class=lead></p><p>This release has been tracked in <a href="https://github.com/orgs/cloud-hypervisor/projects/6/views/6?filterQuery=release%3A%22Release+55%22">v55.0 group</a> of our <a href=https://github.com/orgs/cloud-hypervisor/projects/6/>roadmap project</a>.</p><h3 id=security-fixes>Security Fixes <a href=#security-fixes class=anchor aria-hidden=true>#</a></h3><p>This release fixes a use-after-free vulnerability in <code>virtio-pmem</code> during VM
+shutdown (#9326), which is also fixed in v53.1 and v54.1. See
+<a href=https://github.com/cloud-hypervisor/cloud-hypervisor/security/advisories/GHSA-3r3x-6hgg-2m38>GHSA-3r3x-6hgg-2m38</a>
+for details.</p><h3 id=aarch64-nested-virtualization>AArch64 Nested Virtualization <a href=#aarch64-nested-virtualization class=anchor aria-hidden=true>#</a></h3><p>AArch64 guests on KVM can now run VMs with <code>--cpus nested=on</code>. This requires
+hardware with <code>FEAT_NV2</code> and a host kernel in VHE mode booted with
+<code>kvm-arm.mode=nested</code>. Snapshot/restore and live migration are not supported
+for such guests yet (#8921).</p><h3 id=vfio-peer-to-peer-dma-with-dma-buf>VFIO Peer-to-Peer DMA with dma-buf <a href=#vfio-peer-to-peer-dma-with-dma-buf class=anchor aria-hidden=true>#</a></h3><p>Peer-to-peer DMA between VFIO devices now uses VFIO dma-buf with <code>iommufd</code>
+where the host kernel supports it, and keeps using <code>VFIO_DMA_MAP</code> otherwise
+(#9141).</p><h3 id=cpu-hotplug-for-sev-snp-guests-on-kvm>CPU Hotplug for SEV-SNP Guests on KVM <a href=#cpu-hotplug-for-sev-snp-guests-on-kvm class=anchor aria-hidden=true>#</a></h3><p>SEV-SNP guests on KVM now support CPU hotplug. They now also require ACPI
+tables supplied through <code>fw_cfg</code> (#9111).</p><h3 id=vsock-seqpacket-support><code>vsock</code> SEQPACKET Support <a href=#vsock-seqpacket-support class=anchor aria-hidden=true>#</a></h3><p>The <code>vsock</code> device now supports <code>SOCK_SEQPACKET</code> connections in addition to
+<code>SOCK_STREAM</code> (#9377).</p><h3 id=higher-vcpu-limit-on-aarch64>Higher vCPU Limit on AArch64 <a href=#higher-vcpu-limit-on-aarch64 class=anchor aria-hidden=true>#</a></h3><p>The vCPU limit on KVM/AArch64 has been raised from 255 to 990 (#9125, #9225).</p><h3 id=pvmemcontrol-improvements><code>pvmemcontrol</code> Improvements <a href=#pvmemcontrol-improvements class=anchor aria-hidden=true>#</a></h3><p>The <code>pvmemcontrol</code> device now supports <code>MADV_HUGEPAGE</code>, <code>MADV_NOHUGEPAGE</code>,
+<code>MADV_DONTNEED_LOCKED</code> (also in batches) and <code>MLOCK_ONFAULT</code> requests from the
+guest (#9067).</p><h3 id=snapshotrestore-and-live-migration-improvements>Snapshot/Restore and Live Migration Improvements <a href=#snapshotrestore-and-live-migration-improvements class=anchor aria-hidden=true>#</a></h3><ul><li>Postcopy migration now supports <code>vhost-user</code> devices, including the reference
+<code>vhost_user_block</code> and <code>vhost_user_net</code> backends, and restores ballooned
+pages as zero pages (#9094, #9391, #9039).</li><li>Snapshots of VMs restored with <code>memory_restore_mode=copyonwrite</code> only write
+the pages changed since the restore, on filesystems with reflink support
+(#9000).</li><li>A new <code>memory_restore_mode=ondemand_no_background_fetch_pages</code> restores on
+demand without fetching the remaining pages in the background (#9435).</li><li>Live migration is faster and no longer hangs on unresponsive peers (#8944,
+#9204, #9219).</li><li>The output of the serial port and <code>virtio-console</code> can be changed on
+<code>restore</code> and <code>receive-migration</code> (#9358).</li><li>Add CPUID compatibility checks for AMD-specific leaves, which may reject
+migrations that appeared to work before (#9350, #9364, #9418).</li></ul><h3 id=new-command-line-and-api-options>New Command-Line and API Options <a href=#new-command-line-and-api-options class=anchor aria-hidden=true>#</a></h3><ul><li><code>restore</code> and <code>receive-migration</code> gained an <code>external_fds</code> option, on the
+command line and in the API, that takes all replacement file descriptors in
+one list (#8833).</li><li><code>--guest-shutdown-action</code> and <code>--guest-reset-action</code> control what the VMM
+does when the guest shuts down or resets (#9161).</li><li><code>--serial</code> and <code>--console</code> accept <code>tcp=&lt;ip>:&lt;port></code> to listen on a loopback
+TCP address (#8874, #9367).</li><li>CPU profiles can be loaded from a file with <code>--cpus profile=path:&lt;file></code>, and
+CPUID leaves can be overridden with <code>x-cpuid-overrides</code>, to migrate VMs
+between hosts with different CPUs. Both are experimental and x86_64 only
+(#9076, #9078).</li><li>The rate limiter supports bounded bursts through the new
+<code>{bw,ops}_burst_rate</code>, <code>{bw,ops}_burst_seconds</code> and
+<code>{bw,ops}_burst_recharge_seconds</code> options (#9135).</li><li><code>--cpus kvm_hint_realtime=on</code> advertises <code>KVM_HINTS_REALTIME</code> to guests whose
+vCPUs run on dedicated host CPUs (#9156).</li><li>The D-Bus API gained disk resize and NMI requests (#9319).</li><li><code>--landlock</code> no longer requires a VM payload (#9121).</li><li><code>vm.counters</code> now reports a <code>device_type</code> string for each device, next to its
+integer counters (#9434).</li></ul><h3 id=notable-performance-improvements>Notable Performance Improvements <a href=#notable-performance-improvements class=anchor aria-hidden=true>#</a></h3><ul><li><code>vsock</code> receive buffers are filled in batches, and a starved backend is no
+longer polled (#9306).</li><li>VHDX reads run concurrently and scale with the number of queues (#9412).</li><li>Serial output is faster (#9189).</li><li><code>virtio-iommu</code> UNMAP requests no longer scan all mappings of a domain, which
+speeds up passthrough devices with many mappings (#9431).</li></ul><h3 id=deprecations-and-removals>Deprecations and Removals <a href=#deprecations-and-removals class=anchor aria-hidden=true>#</a></h3><ul><li>Host kernels older than 6.8 are no longer supported. The previous minimum was
+5.13 (#9106, #9109).</li><li>Intel TDX support has been removed, pending a new implementation (#9112).</li><li>The <code>--platform</code> options <code>serial_number</code> and <code>uuid</code> and the generic
+<code>vhost-user</code> option <code>virtio_id</code> have been removed (#9096).</li><li>The ignored <code>file</code> option of <code>--memory</code> has been removed (#9331).</li><li>Legacy VFIO (container/group) is deprecated in favor of the <code>vfio-cdev</code> mode
+with <code>iommufd</code> (#9402).</li><li>ACPI memory hotplug is deprecated in favor of
+<code>--memory hotplug_method=virtio-mem</code> (#9443).</li><li><code>--no-shutdown</code> is deprecated in favor of
+<code>--guest-shutdown-action=shutdown-vm</code> (#9161).</li><li>The <code>net_fds</code>, <code>vfio_fds</code> and <code>iommufd_fd</code> options of <code>restore</code> and
+<code>receive-migration</code> are deprecated in favor of <code>external_fds</code>. Unused file
+descriptor entries are now rejected (#8833).</li><li>Restoring a VM with VFIO devices through their saved device paths is no
+longer supported. <code>restore</code> now requires their file descriptors through
+<code>external_fds</code>, like <code>receive-migration</code> (#9281).</li></ul><h3 id=security-hardening>Security Hardening <a href=#security-hardening class=anchor aria-hidden=true>#</a></h3><ul><li>Trap the PCI configuration space mirror in BAR0 of NVIDIA GPUs instead of
+mapping it into the guest (#9365).</li><li>Enforce mapping permissions in <code>virtio-iommu</code> (#9397).</li><li>Enforce the virtio PCI queue configuration lifecycle (#9099), reject feature
+writes after <code>FEATURES_OK</code> (#9324), and require <code>VIRTIO_F_ACCESS_PLATFORM</code> to
+be accepted when offered (#9136).</li><li>Reject <code>virtio-net</code> offloads that were not negotiated (#9323, #9327), and
+validate RX and control queue descriptors (#9147, #9155).</li><li>Validate <code>virtio-block</code> request headers (#9184) and <code>virtio-rtc</code> buffers
+(#9400).</li><li>Bound <code>pvmemcontrol</code> hole punching to guest memory (#9117), don&rsquo;t expose
+uninitialized bytes (#9123), and check pvpanic access sizes (#9190).</li><li>Restrict the <code>io_uring</code> operations of the block backends (#9129).</li><li>Narrow the Landlock rules for read-only disks and the <code>vsock</code> socket
+directory (#9119).</li><li>Harden QCOW2 parsing (#9073, #9097, #9172, #9249), and reject encrypted
+images and writable images with internal snapshots (#9170, #9159).</li><li>Harden VHDX BAT validation (#9148, #9157, #9185, #9198), and reject images
+with an active log (#9199).</li></ul><h3 id=notable-bug-fixes>Notable Bug Fixes <a href=#notable-bug-fixes class=anchor aria-hidden=true>#</a></h3><ul><li>Various fixes for NVIDIA Grace-Blackwell (GB) platforms (#9105, #9098, #9114,
+#9110).</li><li>Return zeros for punched QCOW2 clusters with a backing file (#9162), and
+don&rsquo;t leak preallocated zero clusters (#9192).</li><li>Fix a stack overflow in the refcount handling of large QCOW2 images (#9441).</li><li>Fix reads and writes beyond 4 GiB in VHDX images. Data that earlier releases
+wrote there is not found at the corrected location (#9328).</li><li>Report I/O errors for rejected <code>virtio-block</code> requests and short completions
+(#9268, #9255), fail writethrough writes whose <code>fsync</code> fails (#9231), and pad
+disk serials to 20 bytes (#9164).</li><li>Further robustness fixes for <code>virtio-block</code> and <code>virtio-net</code> (#9197).</li><li>Fix stale memory after a migration with <code>vhost-user</code> devices (#9131), fix
+snapshots on hosts with nested virtualization disabled (#9116), and don&rsquo;t
+resume devices on the migration source during teardown (#9221).</li><li>Fix late guest timers and RCU stall warnings after a restore (#9300, #9273,
+#9351).</li><li>Save and restore more device state, such as platform devices, hotplug
+controllers, and the AArch64 GIC (#9363, #9339, #9415, #9425, #9417, #9318,
+#9312, #9270, #9305, #9337).</li><li>Handle devices that the guest already ejected in <code>remove-device</code> and on
+restore (#9293).</li><li>Send the host RARP announcement only on the first TAP queue after a restore
+or migration, avoiding duplicates and a host kernel warning (#9436).</li><li>Fix <code>vhost-user</code> devices staying stopped after a failed backend state save
+(#9362).</li><li>Drop features that a driver no longer accepts on renegotiation, fixing
+OpenBSD guests with <code>offload_tso=on</code> (#9384).</li><li>Fix hangs when <code>DRIVER_OK</code> is written over MMCONFIG (#9361) and when a device
+thread misses a pause request (#9308).</li><li>Honor the window offset of the virtio PCI configuration access capability
+(#9088), and return correct <code>virtio-iommu</code> request statuses (#9246).</li><li>Align PCI BARs to their size (#9389), and fix phantom 64-bit BAR
+reprogramming (#9087) and byte writes to the MSI-X message control (#9396).</li><li>Fix device hotplug failing when it races with a guest BAR move, and failed
+hotplugs blocking a retry with the same ID (#9428, #9419, #9440).</li><li>Fix <code>vfio-user</code> MSI-X emulation when relocation enlarged the BAR (#9416).</li><li>Populate the FDT <code>iommu-map</code> for all PCI segments on AArch64 (#9314).</li><li>Use the QEMU subsystem ID for pvpanic and ivshmem, so the Windows pvpanic
+driver binds (#9075).</li><li>Fix 16550 interrupt handling, which stopped the console output of FreeBSD
+guests (#9187, #9263, #9347).</li><li>Don&rsquo;t fail memory hotplug with a disconnected <code>vhost-user</code> backend (#9205).</li><li>Fix a deadlock between memory resize and device eject (#9201), and validate
+resize requests against the VM configuration (#9248).</li><li>Release guest memory after a failed VFIO attachment and on SEV-SNP teardown
+(#9297).</li><li>Fix Landlock with VFIO devices (#9405) and with TAP devices passed by name
+(#9413).</li><li>Fix a race on the API socket lock file (#9203).</li><li>Honor the system timezone in local log timestamps (#9257).</li><li>Don&rsquo;t warn about an existing TAP device without <code>ip=</code> (#9093).</li><li>Reject zero vCPUs, zero queues, invalid <code>max_phys_bits</code> and overflowing CPU
+topologies (#9317, #9330, #9336, #9321).</li><li>Return errors instead of panicking in several places (#9214, #9215, #9176,
+#9138, #9140).</li><li>Fix x86 emulator bugs on MSHV (#9084, #9193, #9207, #9346, #9433, #9445), and
+validate the IGVM CPUID page (#9158).</li><li>On KVM, only finalize SVE when available (#9171), handle capability query
+errors (#9149), and fail early without SEV-SNP capabilities (#9142).</li><li>OpenAPI specification fixes (#9370, #9160).</li><li>Documentation improvements and fixes (#9368, #9372, #9373, #9385, #9357,
+#9383).</li></ul><h3 id=contributors>Contributors <a href=#contributors class=anchor aria-hidden=true>#</a></h3><p>Many thanks to everyone who has contributed to our release:</p><ul><li>Alex Turner <a href=mailto:alex@turntrout.com>alex@turntrout.com</a></li><li>Anatol Belski <a href=mailto:anbelski@linux.microsoft.com>anbelski@linux.microsoft.com</a></li><li>Bert Belder <a href=mailto:bert@deno.com>bert@deno.com</a></li><li>Bo Chen <a href=mailto:bchen@crusoe.ai>bchen@crusoe.ai</a></li><li>Changyuan Lyu <a href=mailto:changyuanl@google.com>changyuanl@google.com</a></li><li>Chit Mitra <a href=mailto:chittajit@google.com>chittajit@google.com</a></li><li>CMGS <a href=mailto:ilskdw@gmail.com>ilskdw@gmail.com</a></li><li>Daniel Guns <a href=mailto:danbguns@gmail.com>danbguns@gmail.com</a></li><li>doge <a href=mailto:me@crackerben.com>me@crackerben.com</a></li><li>Erick Bourgeois <a href=mailto:erick@jeb.ca>erick@jeb.ca</a></li><li>Gabi Villalonga Simon <a href=mailto:gvillalongasimon@cloudflare.com>gvillalongasimon@cloudflare.com</a></li><li>Hong <a href=mailto:78775577+snghong@users.noreply.github.com>78775577+snghong@users.noreply.github.com</a></li><li>Isaku Yamahata <a href=mailto:iyamahata@crusoe.ai>iyamahata@crusoe.ai</a></li><li>Julian Schindel <a href=mailto:julian.schindel@cyberus-technology.de>julian.schindel@cyberus-technology.de</a></li><li>Leander Kohler <a href=mailto:leander.kohler@cyberus-technology.de>leander.kohler@cyberus-technology.de</a></li><li>Lukas Frank <a href=mailto:lukas.frank@sap.com>lukas.frank@sap.com</a></li><li>Martin Tutko <a href=mailto:martin@tutko.dev>martin@tutko.dev</a></li><li>Matt Braun <a href=mailto:matt@fly.io>matt@fly.io</a></li><li>nagendramohan <a href=mailto:nagendramohan1990@gmail.com>nagendramohan1990@gmail.com</a></li><li>Oliver Anderson <a href=mailto:oliver.anderson@cyberus-technology.de>oliver.anderson@cyberus-technology.de</a></li><li>Pascal Scholz <a href=mailto:pascal.scholz@cyberus-technology.de>pascal.scholz@cyberus-technology.de</a></li><li>Philipp Schuster <a href=mailto:philipp.schuster@cyberus-technology.de>philipp.schuster@cyberus-technology.de</a></li><li>Rob Bradford <a href=mailto:rbradford@meta.com>rbradford@meta.com</a></li><li>Ruben Hakobyan <a href=mailto:hruben@meta.com>hruben@meta.com</a></li><li>Sahana Bogar <a href=mailto:sahana@digiscrypt.com>sahana@digiscrypt.com</a></li><li>Samyazz <a href=mailto:49154465+Samyazz@users.noreply.github.com>49154465+Samyazz@users.noreply.github.com</a></li><li>Sebastien Boeuf <a href=mailto:sboeuf@meta.com>sboeuf@meta.com</a></li><li>Simon Lucido <a href=mailto:simonlucido@meta.com>simonlucido@meta.com</a></li><li>Tianrui Liu <a href=mailto:daisyltr@google.com>daisyltr@google.com</a></li><li>Umang Pokhriyal <a href=mailto:umangpokhriyall@gmail.com>umangpokhriyall@gmail.com</a></li><li>Vasilis Liaskovitis <a href=mailto:vliaskov@gmail.com>vliaskov@gmail.com</a></li><li>Virtainer <a href=mailto:320955747+virtainer@users.noreply.github.com>320955747+virtainer@users.noreply.github.com</a></li><li>Wei Liu <a href=mailto:liuwe@microsoft.com>liuwe@microsoft.com</a></li><li>Weinan Liu <a href=mailto:wnliu@google.com>wnliu@google.com</a></li><li>Xia Chao <a href=mailto:shapirolutts@gmail.com>shapirolutts@gmail.com</a></li><li>Yuhan Deng <a href=mailto:dyuhan@google.com>dyuhan@google.com</a></li></ul><h3 id=download>Download <a href=#download class=anchor aria-hidden=true>#</a></h3><p>See the <a href=https://github.com/cloud-hypervisor/cloud-hypervisor/releases/tag/v55.0>GitHub Release</a> for the release assets.</p></article></div></div></div></div></div></section><section class="section section-sm container-fluid"><div class="row justify-content-center text-center"><div class=col-lg-9></div></div></section><footer class="footer text-muted"><div class=container-xxl><div class=row><div class="col-lg-8 order-last order-lg-first"><ul class=list-inline><li class=list-inline-item>Copyright © 2026 Cloud Hypervisor a Series of LF Projects, LLC. For website terms of use, trademark policy, privacy policy and other project policies please see https://lfprojects.org/policies. Rendered with <a href=https://gohugo.io/>Hugo</a>, and <a href=https://getdoks.org/>Doks</a></li></ul></div><div class="col-lg-8 order-first order-lg-last text-lg-end"><ul class=list-inline></ul></div></div></div></footer><script src=https://www.cloudhypervisor.org/js/bootstrap.min.cce6a176802954e99a4d0f67a9793ff6cbb2da0f463e9d8e211ebb39361791fb3da02b597371bf36367363f6b0956eb01378dcf51c8ceb6d455e4f2060afea14.js integrity="sha512-zOahdoApVOmaTQ9nqXk/9suy2g9GPp2OIR67OTYXkfs9oCtZc3G/NjZzY/awlW6wE3jc9RyM621FXk8gYK/qFA==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/js/highlight.min.a4326e9fb7fe7186d35cef8cf9efadc53041724dc47c3d9786f4e8794d0e12eb623ecb3ca27f8912915a9a7195f9ababe5bc1ff3b23e3aabebeb52ff7a3fac0f.js integrity="sha512-pDJun7f+cYbTXO+M+e+txTBBck3EfD2XhvToeU0OEutiPss8on+JEpFamnGV+aur5bwf87I+Oqvr61L/ej+sDw==" crossorigin=anonymous defer></script>
 <script src=https://www.cloudhypervisor.org/main.min.cfa136509b4690212e37c116f5afc6938cf1c5d28348366a61feee1302c067a6e6892a265334fa686ec8cb6c64b2b94d8e269c5fabb6bd568c604ac0a1dc1c9b.js integrity="sha512-z6E2UJtGkCEuN8EW9a/Gk4zxxdKDSDZqYf7uEwLAZ6bmiSomUzT6aG7Iy2xksrlNjiacX6u2vVaMYErAodwcmw==" crossorigin=anonymous defer></script></body></html>
